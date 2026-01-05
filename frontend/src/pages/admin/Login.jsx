@@ -4,63 +4,96 @@ import api from "../../api/axios";
 
 export default function Login() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [form, setForm] = useState({ username: "", password: "" });
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e) => {
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
 
     try {
-      const res = await api.post("/auth/login", {
-        username,
-        password,
-      });
+      const res = await api.post("/auth/login", form);
 
+      // ✅ SIMPAN TOKEN DENGAN KEY YANG BENAR
       localStorage.setItem("admin_token", res.data.token);
-      navigate("/admin/dashboard");
+
+      // ✅ PINDAH KE DASHBOARD
+      navigate("/admin/dashboard", { replace: true });
     } catch (err) {
       setError("Username atau password salah");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form
-        onSubmit={handleLogin}
-        className="bg-white p-6 rounded shadow w-80"
-      >
-        <h1 className="text-xl font-bold mb-4 text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-white to-green-50 px-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8">
+        <h1 className="text-2xl font-bold text-center mb-1">
           Admin Login
         </h1>
+        <p className="text-center text-sm text-gray-500 mb-6">
+          Lembaga Ekonomi Desa
+        </p>
 
         {error && (
-          <p className="text-red-500 text-sm mb-3">
+          <p className="text-red-500 text-sm text-center mb-3">
             {error}
           </p>
         )}
 
-        <input
-          type="text"
-          placeholder="Username"
-          className="w-full border p-2 mb-3 rounded"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            name="username"
+            placeholder="Username"
+            value={form.username}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+          />
 
-        <input
-          type="password"
-          placeholder="Password"
-          className="w-full border p-2 mb-4 rounded"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+            className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 outline-none"
+          />
 
-        <button className="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
-          Login
-        </button>
-      </form>
+          <button
+            disabled={loading}
+            className="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition disabled:opacity-60"
+          >
+            {loading ? "Memproses..." : "Login"}
+          </button>
+        </form>
+
+        <div className="text-center mt-4 space-y-2">
+          <button
+            onClick={() => navigate("/admin/reset")}
+            className="text-sm text-green-600 hover:underline"
+          >
+            Lupa password?
+          </button>
+
+          <div>
+            <button
+              onClick={() => navigate("/")}
+              className="text-sm text-gray-500 hover:underline"
+            >
+              ← Kembali ke Beranda
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

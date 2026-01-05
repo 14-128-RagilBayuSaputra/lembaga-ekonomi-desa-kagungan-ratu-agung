@@ -2,6 +2,8 @@ import { Navigate, useNavigate } from "react-router-dom";
 
 export default function AdminLayout({ children }) {
   const navigate = useNavigate();
+
+  // ✅ AMBIL TOKEN YANG BENAR
   const token = localStorage.getItem("admin_token");
 
   if (!token) {
@@ -10,7 +12,7 @@ export default function AdminLayout({ children }) {
 
   const handleLogout = () => {
     localStorage.removeItem("admin_token");
-    navigate("/admin/login");
+    navigate("/admin/login", { replace: true });
   };
 
   return (
@@ -23,7 +25,7 @@ export default function AdminLayout({ children }) {
 
         <button
           onClick={handleLogout}
-          className="px-4 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition"
+          className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
         >
           Logout
         </button>
