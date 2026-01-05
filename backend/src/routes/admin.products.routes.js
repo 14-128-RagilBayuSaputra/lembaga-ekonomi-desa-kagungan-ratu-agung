@@ -5,6 +5,34 @@ import { authMiddleware } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 /**
+ * GET /api/admin/products
+ * Ambil SEMUA produk (aktif + nonaktif)
+ */
+router.get("/", authMiddleware, async (req, res) => {
+  try {
+    const products = await prisma.products.findMany({
+      orderBy: {
+        created_at: "desc",
+      },
+      include: {
+        category: true, // relasi category (sesuai schema kamu)
+      },
+    });
+
+    res.json({
+      success: true,
+      data: products,
+    });
+  } catch (error) {
+    console.error("ADMIN GET PRODUCTS error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch products",
+    });
+  }
+});
+
+/**
  * POST /api/admin/products
  * Tambah produk baru
  */
@@ -81,7 +109,7 @@ router.put("/:id", authMiddleware, async (req, res) => {
 
 /**
  * DELETE /api/admin/products/:id
- * Soft delete (nonaktifkan)
+ * Soft delete (is_active = false)
  */
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
