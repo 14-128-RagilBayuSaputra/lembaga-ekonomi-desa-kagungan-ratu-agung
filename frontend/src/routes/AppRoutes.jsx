@@ -12,6 +12,10 @@ import Koperasi from "../pages/category/Koperasi";
 import Login from "../pages/admin/Login";
 import ResetAdmin from "../pages/admin/ResetAdmin";
 import Dashboard from "../pages/admin/Dashboard";
+import BUMDesAdmin from "../pages/admin/BUMDesAdmin";
+import UMKMAdmin from "../pages/admin/UMKMAdmin";
+import KoperasiAdmin from "../pages/admin/KoperasiAdmin";
+
 
 /* ADMIN LAYOUT */
 import AdminLayout from "../components/admin/AdminLayout";
@@ -29,6 +33,33 @@ export default function AppRoutes() {
         {/* ADMIN AUTH */}
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin/reset" element={<ResetAdmin />} />
+        <Route
+        path="/admin/bumdes"
+        element={
+       <AdminLayout>
+       <BUMDesAdmin />
+      </AdminLayout>
+      }
+      />
+
+<Route
+  path="/admin/umkm"
+  element={
+    <AdminLayout>
+      <UMKMAdmin />
+    </AdminLayout>
+  }
+/>
+
+<Route
+  path="/admin/koperasi"
+  element={
+    <AdminLayout>
+      <KoperasiAdmin />
+    </AdminLayout>
+  }
+/>
+
 
         {/* ADMIN DASHBOARD (PROTECTED) */}
         <Route

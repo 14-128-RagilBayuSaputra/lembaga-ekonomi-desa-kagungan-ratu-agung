@@ -21,7 +21,7 @@ model categories {
 }
 
 model products {
-  id            Int      @id @default(autoincrement())
+  id            Int        @id @default(autoincrement())
   product_name  String
   business_name String
   price         Int?
@@ -32,11 +32,12 @@ model products {
   shopee_url    String?
   facebook_url  String?
   maps_url      String?
-  is_active     Boolean  @default(true)
-  created_at    DateTime @default(now())
+  is_active     Boolean    @default(true)
+  created_at    DateTime   @default(now())
+  category_id   Int
+  category      categories @relation(fields: [category_id], references: [id])
 
-  category_id Int
-  category    categories @relation(fields: [category_id], references: [id])
+  images product_images[]
 }
 
 model sliders {
@@ -52,4 +53,12 @@ model about {
   id         Int      @id @default(autoincrement())
   content    String
   updated_at DateTime @default(now())
+}
+
+model product_images {
+  id         Int      @id @default(autoincrement())
+  image_url  String
+  product_id Int
+  product    products @relation(fields: [product_id], references: [id], onDelete: Cascade)
+  created_at DateTime @default(now())
 }

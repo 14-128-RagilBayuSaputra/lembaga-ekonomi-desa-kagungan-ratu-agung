@@ -19,7 +19,6 @@ const __dirname = path.dirname(__filename);
 
 app.use(cors());
 app.use(express.json());
-app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // health check
 app.get("/", (req, res) => {
