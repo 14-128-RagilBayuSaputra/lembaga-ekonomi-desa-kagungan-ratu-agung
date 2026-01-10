@@ -6,7 +6,8 @@ export default function HeroSlider() {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    api.get("/sliders")
+    api
+      .get("/sliders")
       .then((res) => {
         setSlides(res.data.data || []);
       })
@@ -18,26 +19,41 @@ export default function HeroSlider() {
 
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % slides.length);
-    }, 4000);
+    }, 4500);
 
     return () => clearInterval(interval);
   }, [slides]);
 
   if (slides.length === 0) {
     return (
-      <div className="h-64 md:h-96 bg-gray-200 flex items-center justify-center">
+      <div className="h-[35vh] md:h-[65vh] bg-gray-200 flex items-center justify-center">
         Slider Desa
       </div>
     );
   }
 
   return (
-    <div className="relative h-64 md:h-96 overflow-hidden">
+    <section className="relative w-full overflow-hidden
+      h-[40vh]
+      sm:h-[50vh]
+      md:h-[60vh]
+      lg:h-[70vh]
+      max-h-[650px]
+    ">
+      {/* IMAGE */}
       <img
         src={slides[index].image_url}
-        alt="Slider"
-        className="w-full h-full object-cover transition-all duration-700"
+        alt="Hero Slider"
+        className="
+          absolute inset-0
+          w-full h-full
+          object-cover object-center
+          transition-opacity duration-700
+        "
       />
-    </div>
+
+      {/* OVERLAY (optional, tapi bagus) */}
+      <div className="absolute inset-0 bg-black/20" />
+    </section>
   );
 }

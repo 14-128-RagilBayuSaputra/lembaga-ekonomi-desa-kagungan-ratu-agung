@@ -18,8 +18,7 @@ export default function AdminProductManager({ title, categoryId }) {
     maps_url: "",
   });
 
-  const [selectedImages, setSelectedImages] = useState([]);
-  const [previewImages, setPreviewImages] = useState([]);
+  const [images, setImages] = useState([]);
 
   /* ================= FETCH ================= */
   const fetchProducts = async () => {
@@ -34,33 +33,30 @@ export default function AdminProductManager({ title, categoryId }) {
     fetchProducts();
   }, [categoryId]);
 
-  /* ================= IMAGE HANDLER ================= */
-  const handleImageChange = (e) => {
-    const files = Array.from(e.target.files);
-
-    setSelectedImages(files);
-    setPreviewImages(files.map((f) => URL.createObjectURL(f)));
-  };
-
-  /* ================= FORM ================= */
+  /* ================= HANDLERS ================= */
   const handleChange = (e) =>
     setForm({ ...form, [e.target.name]: e.target.value });
 
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    setImages((prev) => [...prev, ...files]);
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /* ================= SUBMIT ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     const formData = new FormData();
-
     Object.entries(form).forEach(([k, v]) =>
       formData.append(k, v)
     );
-
     formData.append("category_id", categoryId);
-
-    selectedImages.forEach((img) =>
-      formData.append("images", img)
-    );
+    images.forEach((img) => formData.append("images", img));
 
     try {
       await api.post("/admin/products", formData);
@@ -76,18 +72,17 @@ export default function AdminProductManager({ title, categoryId }) {
         facebook_url: "",
         maps_url: "",
       });
-
-      setSelectedImages([]);
-      setPreviewImages([]);
-
-      fetchProducts();
+      setImages([]);
+      fetchProducts_toggle();
     } catch (err) {
+      alert("Gagal menambah produk");
       console.error(err);
-      alert("Gagal upload produk");
     } finally {
       setLoading(false);
     }
   };
+
+  const fetchProducts_toggle = () => fetchProducts();
 
   /* ================= DELETE ================= */
   const handleDelete = async (id) => {
@@ -102,66 +97,92 @@ export default function AdminProductManager({ title, categoryId }) {
         Manajemen Produk {title}
       </h1>
 
-      {/* FORM */}
+      {/* ================= FORM ================= */}
       <form
         onSubmit={handleSubmit}
-        className="bg-white p-6 rounded-xl shadow space-y-4"
+        className="bg-white p-6 rounded-xl shadow space-y-8"
       >
-        <input
-          required
-          name="product_name"
-          placeholder="Nama Produk"
-          className="input"
-          value={form.product_name}
-          onChange={handleChange}
-        />
+        {/* INFO UTAMA */}
+        <div className="space-y-4">
+          <h2 className="font-semibold text-lg">Informasi Produk</h2>
 
-        <input
-          required
-          name="business_name"
-          placeholder="Nama Usaha"
-          className="input"
-          value={form.business_name}
-          onChange={handleChange}
-        />
+          <input
+            required
+            name="product_name"
+            placeholder="Nama Produk"
+            className="input"
+            value={form.product_name}
+            onChange={handleChange}
+          />
 
-        <input
-          name="price"
-          placeholder="Harga (opsional)"
-          className="input"
-          value={form.price}
-          onChange={handleChange}
-        />
+          <input
+            required
+            name="business_name"
+            placeholder="Nama Usaha"
+            className="input"
+            value={form.business_name}
+            onChange={handleChange}
+          />
 
-        <textarea
-          name="description"
-          placeholder="Deskripsi Produk"
-          className="input h-24"
-          value={form.description}
-          onChange={handleChange}
-        />
+          <input
+            name="price"
+            placeholder="Harga (opsional)"
+            className="input"
+            value={form.price}
+            onChange={handleChange}
+          />
 
-        {/* MULTI IMAGE */}
-        <input
-          type="file"
-          name="images"          // ⬅️ FIX KRUSIAL
-          multiple
-          accept="image/*"
-          onChange={handleImageChange}
-        />
+          <textarea
+            name="description"
+            placeholder="Deskripsi Produk"
+            className="input h-24"
+            value={form.description}
+            onChange={handleChange}
+          />
+        </div>
 
-        {/* PREVIEW */}
-        {previewImages.length > 0 && (
-          <div className="grid grid-cols-4 gap-3">
-            {previewImages.map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                className="h-24 w-full object-cover rounded"
-              />
-            ))}
-          </div>
-        )}
+        {/* MEDIA */}
+        <div className="space-y-4">
+          <h2 className="font-semibold text-lg">Kontak & Media</h2>
+
+          <input name="whatsapp_url" placeholder="WhatsApp URL" className="input" value={form.whatsapp_url} onChange={handleChange} />
+          <input name="instagram_url" placeholder="Instagram URL" className="input" value={form.instagram_url} onChange={handleChange} />
+          <input name="facebook_url" placeholder="Facebook URL" className="input" value={form.facebook_url} onChange={handleChange} />
+          <input name="shopee_url" placeholder="Shopee URL" className="input" value={form.shopee_url} onChange={handleChange} />
+          <input name="maps_url" placeholder="Google Maps URL" className="input" value={form.maps_url} onChange={handleChange} />
+        </div>
+
+        {/* GAMBAR */}
+        <div className="space-y-4">
+          <h2 className="font-semibold text-lg">Gambar Produk</h2>
+
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleImageChange}
+          />
+
+          {images.length > 0 && (
+            <div className="grid grid-cols-5 gap-3">
+              {images.map((img, i) => (
+                <div key={i} className="relative">
+                  <img
+                    src={URL.createObjectURL(img)}
+                    className="h-24 w-full object-cover rounded"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-1 right-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <button
           disabled={loading}
@@ -171,22 +192,17 @@ export default function AdminProductManager({ title, categoryId }) {
         </button>
       </form>
 
-      {/* LIST */}
-      {products.length === 0 ? (
-        <p className="text-center text-gray-500">
-          Belum ada produk
-        </p>
-      ) : (
-        <div className="grid md:grid-cols-3 gap-6">
-          {products.map((p) => (
-            <ProductCardAdmin
-              key={p.id}
-              product={p}
-              onDelete={handleDelete}
-            />
-          ))}
-        </div>
-      )}
+      {/* ================= LIST ================= */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {products.map((p) => (
+          <ProductCardAdmin
+            key={p.id}
+            product={p}
+            onDelete={handleDelete}
+            onUpdated={fetchProducts_toggle}
+          />
+        ))}
+      </div>
     </div>
   );
 }

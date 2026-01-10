@@ -5,6 +5,32 @@ import { authMiddleware } from "../middleware/auth.middleware.js";
 const router = express.Router();
 
 /**
+ * GET /api/admin/sliders
+ * Ambil semua slider (admin)
+ */
+router.get("/", authMiddleware, async (req, res) => {
+  try {
+    const sliders = await prisma.sliders.findMany({
+      orderBy: {
+        created_at: "desc",
+      },
+    });
+
+    res.json({
+      success: true,
+      data: sliders,
+    });
+  } catch (error) {
+    console.error("ADMIN GET SLIDERS error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch sliders",
+    });
+  }
+});
+
+
+/**
  * POST /api/admin/sliders
  * Tambah slider baru
  */

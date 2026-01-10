@@ -1,9 +1,5 @@
-import Products from "./Products";
+import AdminSliderManager from "../../components/admin/AdminSliderManager";
 
 export default function Dashboard() {
-  return (
-    <div>
-      <Products />
-    </div>
-  );
+  return <AdminSliderManager />;
 }

@@ -40,7 +40,6 @@ router.get("/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    // validasi ID
     if (isNaN(id)) {
       return res.status(400).json({
         success: false,
@@ -50,11 +49,12 @@ router.get("/:id", async (req, res) => {
 
     const product = await prisma.products.findFirst({
       where: {
-        id: id,
+        id,
         is_active: true,
       },
       include: {
         category: true,
+        images: true, // ✅ INI YANG PENTING
       },
     });
 
@@ -71,12 +71,12 @@ router.get("/:id", async (req, res) => {
     });
   } catch (error) {
     console.error("GET /api/products/:id error:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to fetch product detail",
     });
   }
 });
+
 
 export default router;

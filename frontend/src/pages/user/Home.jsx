@@ -8,8 +8,9 @@ import ProductDetailModal from "../../components/ui/ProductDetailModal";
 export default function Home() {
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [category, setCategory] = useState("ALL");
+  const [loadingDetail, setLoadingDetail] = useState(false);
 
+  /* ================= FETCH LIST ================= */
   useEffect(() => {
     api.get("/products")
       .then((res) => {
@@ -18,12 +19,19 @@ export default function Home() {
       .catch(console.error);
   }, []);
 
-  const filteredProducts =
-    category === "ALL"
-      ? products
-      : products.filter(
-          (p) => p.category?.name === category
-        );
+  /* ================= FETCH DETAIL ================= */
+  const openProduct = async (id) => {
+    try {
+      setLoadingDetail(true);
+      const res = await api.get(`/products/${id}`);
+      setSelectedProduct(res.data.data);
+    } catch (err) {
+      console.error(err);
+      alert("Gagal membuka produk");
+    } finally {
+      setLoadingDetail(false);
+    }
+  };
 
   return (
     <>
@@ -36,41 +44,22 @@ export default function Home() {
           Tentang Lembaga Ekonomi Desa
         </h2>
         <p className="text-gray-600">
-          Lembaga Ekonomi Desa mengelola potensi ekonomi desa melalui
-          BUMDes, UMKM, dan koperasi untuk meningkatkan kesejahteraan
-          masyarakat.
+          Lembaga Ekonomi Desa mengelola potensi ekonomi desa melalui BUMDes,
+          UMKM, dan koperasi untuk meningkatkan kesejahteraan masyarakat.
         </p>
       </section>
 
       {/* PRODUCTS */}
       <section className="max-w-7xl mx-auto px-4 pb-16">
-        <h2 className="text-2xl font-bold mb-4">
+        <h2 className="text-2xl font-bold mb-6">
           Produk Unggulan Desa
         </h2>
 
-        {/* FILTER */}
-        <div className="flex flex-wrap gap-3 mb-6">
-          {["ALL", "BUMDes", "UMKM", "Koperasi"].map((item) => (
-            <button
-              key={item}
-              onClick={() => setCategory(item)}
-              className={`px-4 py-2 rounded transition ${
-                category === item
-                  ? "bg-green-600 text-white"
-                  : "bg-gray-200 hover:bg-gray-300"
-              }`}
-            >
-              {item}
-            </button>
-          ))}
-        </div>
-
-        {/* PRODUCT GRID */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredProducts.map((item) => (
+          {products.map((item) => (
             <div
               key={item.id}
-              onClick={() => setSelectedProduct(item)}
+              onClick={() => openProduct(item.id)}
               className="bg-white rounded shadow hover:shadow-lg transition cursor-pointer"
             >
               <img
@@ -93,6 +82,12 @@ export default function Home() {
       </section>
 
       {/* MODAL */}
+      {loadingDetail && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center text-white">
+          Memuat produk...
+        </div>
+      )}
+
       <ProductDetailModal
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}
