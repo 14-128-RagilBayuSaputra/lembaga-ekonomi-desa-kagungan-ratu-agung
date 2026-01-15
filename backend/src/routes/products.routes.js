@@ -5,13 +5,27 @@ const router = express.Router();
 
 /**
  * GET /api/products
- * Ambil semua produk aktif
+ * Optional query:
+ * - ?category=BUMDes | UMKM | Koperasi
  */
 router.get("/", async (req, res) => {
   try {
+    const { category } = req.query;
+
     const products = await prisma.products.findMany({
       where: {
         is_active: true,
+        ...(category
+          ? {
+              category: {
+                name: category,
+              },
+            }
+          : {}),
+      },
+      include: {
+        category: true,
+        images: true,
       },
       orderBy: {
         created_at: "desc",
@@ -24,7 +38,6 @@ router.get("/", async (req, res) => {
     });
   } catch (error) {
     console.error("GET /api/products error:", error);
-
     return res.status(500).json({
       success: false,
       message: "Failed to fetch products",
@@ -34,7 +47,7 @@ router.get("/", async (req, res) => {
 
 /**
  * GET /api/products/:id
- * Ambil detail produk berdasarkan ID
+ * Detail produk
  */
 router.get("/:id", async (req, res) => {
   try {
@@ -54,7 +67,7 @@ router.get("/:id", async (req, res) => {
       },
       include: {
         category: true,
-        images: true, // ✅ INI YANG PENTING
+        images: true,
       },
     });
 
@@ -77,6 +90,5 @@ router.get("/:id", async (req, res) => {
     });
   }
 });
-
 
 export default router;

@@ -12,12 +12,9 @@ export default function UMKM() {
 
   useEffect(() => {
     api
-      .get("/products")
+      .get("/products?category=UMKM")
       .then((res) => {
-        const filtered = res.data.data.filter(
-          (p) => p.category?.name === "UMKM"
-        );
-        setProducts(filtered);
+        setProducts(res.data.data || []);
       })
       .catch(console.error);
   }, []);

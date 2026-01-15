@@ -13,16 +13,23 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 /* =========================
+   HELPER: extract publicId
+========================= */
+const getPublicId = (url) => {
+  const parts = url.split("/");
+  const filename = parts.pop();
+  const folder = parts.pop();
+  return `${folder}/${filename.split(".")[0]}`;
+};
+
+/* =========================
    GET ALL PRODUCTS
 ========================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const products = await prisma.products.findMany({
       where: { is_active: true },
-      include: {
-        category: true,
-        images: true,
-      },
+      include: { category: true, images: true },
       orderBy: { created_at: "desc" },
     });
 
@@ -34,7 +41,7 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 /* =========================
-   CREATE PRODUCT (MULTI IMAGE)
+   CREATE PRODUCT
 ========================= */
 router.post(
   "/",
@@ -55,24 +62,20 @@ router.post(
         maps_url,
       } = req.body;
 
-      if (!category_id) {
-        return res.status(400).json({ message: "category_id required" });
-      }
-
       let coverImage = null;
       const galleryImages = [];
 
       if (req.files?.length) {
         for (let i = 0; i < req.files.length; i++) {
-          const result = await new Promise((resolve, reject) => {
+          const uploadResult = await new Promise((resolve, reject) => {
             cloudinary.uploader.upload_stream(
               { folder: "produk-desa/gallery" },
               (err, res) => (err ? reject(err) : resolve(res))
             ).end(req.files[i].buffer);
           });
 
-          if (i === 0) coverImage = result.secure_url;
-          galleryImages.push({ image_url: result.secure_url });
+          if (i === 0) coverImage = uploadResult.secure_url;
+          galleryImages.push({ image_url: uploadResult.secure_url });
         }
       }
 
@@ -89,9 +92,7 @@ router.post(
           shopee_url,
           facebook_url,
           maps_url,
-          images: {
-            create: galleryImages,
-          },
+          images: { create: galleryImages },
         },
         include: { images: true },
       });
@@ -105,7 +106,7 @@ router.post(
 );
 
 /* =========================
-   UPDATE PRODUCT + ADD IMAGES
+   UPDATE PRODUCT
 ========================= */
 router.put(
   "/:id",
@@ -114,6 +115,13 @@ router.put(
   async (req, res) => {
     try {
       const id = Number(req.params.id);
+
+      const product = await prisma.products.findUnique({
+        where: { id },
+        include: { images: true },
+      });
+
+      if (!product) return res.status(404).json({ success: false });
 
       const newImages = [];
 
@@ -130,7 +138,7 @@ router.put(
         }
       }
 
-      const product = await prisma.products.update({
+      const updated = await prisma.products.update({
         where: { id },
         data: {
           product_name: req.body.product_name,
@@ -142,14 +150,12 @@ router.put(
           shopee_url: req.body.shopee_url,
           facebook_url: req.body.facebook_url,
           maps_url: req.body.maps_url,
-          images: newImages.length
-            ? { create: newImages }
-            : undefined,
+          images: newImages.length ? { create: newImages } : undefined,
         },
         include: { images: true },
       });
 
-      res.json({ success: true, data: product });
+      res.json({ success: true, data: updated });
     } catch (err) {
       console.error("UPDATE PRODUCT ERROR:", err);
       res.status(500).json({ success: false });
@@ -167,10 +173,7 @@ router.delete("/image/:id", authMiddleware, async (req, res) => {
     const image = await prisma.product_images.findUnique({ where: { id } });
     if (!image) return res.status(404).json({ success: false });
 
-    // delete from cloudinary
-    const publicId = image.image_url.split("/").pop().split(".")[0];
-    await cloudinary.uploader.destroy(`produk-desa/gallery/${publicId}`);
-
+    await cloudinary.uploader.destroy(getPublicId(image.image_url));
     await prisma.product_images.delete({ where: { id } });
 
     res.json({ success: true });
@@ -181,17 +184,34 @@ router.delete("/image/:id", authMiddleware, async (req, res) => {
 });
 
 /* =========================
-   DELETE PRODUCT (SOFT)
+   DELETE PRODUCT (FULL CLEAN)
 ========================= */
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
-    await prisma.products.update({
-      where: { id: Number(req.params.id) },
-      data: { is_active: false },
+    const id = Number(req.params.id);
+
+    const product = await prisma.products.findUnique({
+      where: { id },
+      include: { images: true },
     });
 
+    if (!product) return res.status(404).json({ success: false });
+
+    // delete cover
+    if (product.image_url) {
+      await cloudinary.uploader.destroy(getPublicId(product.image_url));
+    }
+
+    // delete gallery
+    for (const img of product.images) {
+      await cloudinary.uploader.destroy(getPublicId(img.image_url));
+    }
+
+    await prisma.products.delete({ where: { id } });
+
     res.json({ success: true });
-  } catch {
+  } catch (err) {
+    console.error("DELETE PRODUCT ERROR:", err);
     res.status(500).json({ success: false });
   }
 });

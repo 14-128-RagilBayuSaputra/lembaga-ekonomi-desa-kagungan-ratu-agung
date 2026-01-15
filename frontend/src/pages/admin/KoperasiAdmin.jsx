@@ -4,7 +4,7 @@ export default function KoperasiAdmin() {
   return (
     <AdminProductManager
       title="Koperasi"
-      categoryId={3}
+      categoryId={3}   // ✅ Koperasi
     />
   );
 }

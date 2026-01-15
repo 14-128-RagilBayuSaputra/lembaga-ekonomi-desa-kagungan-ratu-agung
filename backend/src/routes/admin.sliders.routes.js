@@ -1,63 +1,55 @@
 import express from "express";
 import prisma from "../prisma/client.js";
+import cloudinary from "../config/cloudinary.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-/**
- * GET /api/admin/sliders
- * Ambil semua slider (admin)
- */
+/* =========================
+   GET SLIDERS (ADMIN)
+========================= */
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const sliders = await prisma.sliders.findMany({
-      orderBy: {
-        created_at: "desc",
-      },
+      orderBy: { order: "asc" },
     });
 
-    res.json({
-      success: true,
-      data: sliders,
-    });
-  } catch (error) {
-    console.error("ADMIN GET SLIDERS error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch sliders",
-    });
+    res.json({ success: true, data: sliders });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
   }
 });
 
-
-/**
- * POST /api/admin/sliders
- * Tambah slider baru
- */
+/* =========================
+   CREATE SLIDER
+========================= */
 router.post("/", authMiddleware, async (req, res) => {
   try {
-    const { title, description, image_url } = req.body;
+    const { image_url } = req.body;
+
+    const maxOrder = await prisma.sliders.aggregate({
+      _max: { order: true },
+    });
 
     const slider = await prisma.sliders.create({
       data: {
-        title,
-        description,
         image_url,
+        order: (maxOrder._max.order ?? -1) + 1,
         is_active: true,
       },
     });
 
     res.status(201).json({ success: true, data: slider });
-  } catch (error) {
-    console.error("ADMIN CREATE SLIDER error:", error);
-    res.status(500).json({ success: false, message: "Failed to create slider" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
   }
 });
 
-/**
- * PUT /api/admin/sliders/:id
- * Update slider
- */
+/* =========================
+   UPDATE (TOGGLE / ORDER)
+========================= */
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
@@ -68,29 +60,54 @@ router.put("/:id", authMiddleware, async (req, res) => {
     });
 
     res.json({ success: true, data: slider });
-  } catch (error) {
-    console.error("ADMIN UPDATE SLIDER error:", error);
-    res.status(500).json({ success: false, message: "Failed to update slider" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
   }
 });
 
-/**
- * DELETE /api/admin/sliders/:id
- * Soft delete slider
- */
+/* =========================
+   REORDER (DRAG & DROP)
+========================= */
+router.put("/reorder/all", authMiddleware, async (req, res) => {
+  try {
+    const { orders } = req.body;
+
+    const queries = orders.map((s) =>
+      prisma.sliders.update({
+        where: { id: s.id },
+        data: { order: s.order },
+      })
+    );
+
+    await prisma.$transaction(queries);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
+  }
+});
+
+/* =========================
+   DELETE SLIDER (DB + CLOUDINARY)
+========================= */
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     const id = Number(req.params.id);
 
-    await prisma.sliders.update({
-      where: { id },
-      data: { is_active: false },
-    });
+    const slider = await prisma.sliders.findUnique({ where: { id } });
+    if (!slider) return res.status(404).json({ success: false });
 
-    res.json({ success: true, message: "Slider deactivated" });
-  } catch (error) {
-    console.error("ADMIN DELETE SLIDER error:", error);
-    res.status(500).json({ success: false, message: "Failed to delete slider" });
+    const publicId = slider.image_url.split("/").pop().split(".")[0];
+    await cloudinary.uploader.destroy(`slider/${publicId}`);
+
+    await prisma.sliders.delete({ where: { id } });
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false });
   }
 });
 

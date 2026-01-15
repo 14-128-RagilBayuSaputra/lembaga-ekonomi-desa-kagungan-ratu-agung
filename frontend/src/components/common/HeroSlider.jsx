@@ -6,53 +6,27 @@ export default function HeroSlider() {
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
-    api
-      .get("/sliders")
-      .then((res) => {
-        setSlides(res.data.data || []);
-      })
-      .catch(console.error);
+    api.get("/sliders").then(res => {
+      setSlides(res.data.data.filter(s => s.is_active));
+    });
   }, []);
 
   useEffect(() => {
-    if (slides.length === 0) return;
-
-    const interval = setInterval(() => {
-      setIndex((prev) => (prev + 1) % slides.length);
+    if (!slides.length) return;
+    const t = setInterval(() => {
+      setIndex(i => (i + 1) % slides.length);
     }, 4500);
-
-    return () => clearInterval(interval);
+    return () => clearInterval(t);
   }, [slides]);
 
-  if (slides.length === 0) {
-    return (
-      <div className="h-[35vh] md:h-[65vh] bg-gray-200 flex items-center justify-center">
-        Slider Desa
-      </div>
-    );
-  }
+  if (!slides.length) return null;
 
   return (
-    <section className="relative w-full overflow-hidden
-      h-[40vh]
-      sm:h-[50vh]
-      md:h-[60vh]
-      lg:h-[70vh]
-      max-h-[650px]
-    ">
-      {/* IMAGE */}
+    <section className="relative h-[60vh]">
       <img
         src={slides[index].image_url}
-        alt="Hero Slider"
-        className="
-          absolute inset-0
-          w-full h-full
-          object-cover object-center
-          transition-opacity duration-700
-        "
+        className="absolute inset-0 w-full h-full object-cover"
       />
-
-      {/* OVERLAY (optional, tapi bagus) */}
       <div className="absolute inset-0 bg-black/20" />
     </section>
   );

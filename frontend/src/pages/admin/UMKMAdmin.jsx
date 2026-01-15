@@ -1,5 +1,11 @@
-import BUMDesAdmin from "./BUMDesAdmin";
+// UMKMAdmin.jsx
+import AdminProductManager from "../../components/admin/AdminProductManager";
 
 export default function UMKMAdmin() {
-  return <BUMDesAdmin CATEGORY_ID_OVERRIDE={2} title="Manajemen Produk UMKM" />;
+  return (
+    <AdminProductManager
+      title="UMKM"
+      categoryId={2}   // ✅ UMKM
+    />
+  );
 }

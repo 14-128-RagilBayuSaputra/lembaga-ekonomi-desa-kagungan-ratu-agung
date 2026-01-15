@@ -2,13 +2,38 @@ import { useEffect, useState } from "react";
 import api from "../../api/axios";
 import SliderCardAdmin from "./SliderCardAdmin";
 
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+
+import {
+  SortableContext,
+  arrayMove,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+
 export default function AdminSliderManager() {
   const [sliders, setSliders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [imageFile, setImageFile] = useState(null);
   const [preview, setPreview] = useState(null);
 
-  /* ================= FETCH ADMIN SLIDERS ================= */
+  /* ================= DND SENSORS ================= */
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 150, tolerance: 5 },
+    })
+  );
+
+  /* ================= FETCH ================= */
   const fetchSliders = async () => {
     const res = await api.get("/admin/sliders");
     setSliders(res.data.data || []);
@@ -18,26 +43,18 @@ export default function AdminSliderManager() {
     fetchSliders();
   }, []);
 
-  /* ================= IMAGE CHANGE ================= */
+  /* ================= IMAGE ================= */
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // cleanup old preview
-    if (preview) URL.revokeObjectURL(preview);
-
     setImageFile(file);
     setPreview(URL.createObjectURL(file));
   };
 
-  /* ================= ADD SLIDER ================= */
+  /* ================= ADD ================= */
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!imageFile) {
-      alert("Pilih gambar slider terlebih dahulu");
-      return;
-    }
+    if (!imageFile) return alert("Pilih gambar dulu");
 
     try {
       setLoading(true);
@@ -45,27 +62,28 @@ export default function AdminSliderManager() {
       const formData = new FormData();
       formData.append("image", imageFile);
 
-      // ⬅️ JANGAN set Content-Type manual
       const upload = await api.post("/admin/upload", formData);
-      const image_url = upload.data.image_url;
 
       await api.post("/admin/sliders", {
-        title: "",
-        description: "",
-        image_url,
+        image_url: upload.data.image_url,
       });
 
-      // reset state
       setImageFile(null);
       setPreview(null);
-
       fetchSliders();
-    } catch (err) {
-      console.error(err);
-      alert("Gagal menambah slider");
+    } catch {
+      alert("Gagal tambah slider");
     } finally {
       setLoading(false);
     }
+  };
+
+  /* ================= TOGGLE ================= */
+  const toggleActive = async (slider) => {
+    await api.put(`/admin/sliders/${slider.id}`, {
+      is_active: !slider.is_active,
+    });
+    fetchSliders();
   };
 
   /* ================= DELETE ================= */
@@ -75,22 +93,41 @@ export default function AdminSliderManager() {
     fetchSliders();
   };
 
+  /* ================= DRAG END ================= */
+  const handleDragEnd = async (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = sliders.findIndex((i) => i.id === active.id);
+    const newIndex = sliders.findIndex((i) => i.id === over.id);
+
+    const newOrder = arrayMove(sliders, oldIndex, newIndex).map((s, i) => ({
+      ...s,
+      order: i,
+    }));
+
+    setSliders(newOrder);
+
+    await api.put("/admin/sliders/reorder/all", {
+      orders: newOrder.map((s) => ({
+        id: s.id,
+        order: s.order,
+      })),
+    });
+  };
+
   return (
     <div className="space-y-8">
       <h1 className="text-2xl font-bold">Manajemen Slider Beranda</h1>
 
-      {/* ADD SLIDER */}
+      {/* ADD */}
       <form
         onSubmit={handleSubmit}
         className="bg-white p-6 rounded-xl shadow space-y-4 max-w-xl"
       >
         <h2 className="font-semibold">Tambah Slider</h2>
 
-        <input
-          type="file"
-          accept="image/*"
-          onChange={handleImageChange}
-        />
+        <input type="file" accept="image/*" onChange={handleImageChange} />
 
         {preview && (
           <img
@@ -99,25 +136,34 @@ export default function AdminSliderManager() {
           />
         )}
 
-        <button
-          disabled={loading}
-          className="bg-green-600 text-white px-6 py-2 rounded"
-        >
+        <button className="bg-green-600 text-white px-6 py-2 rounded">
           {loading ? "Menyimpan..." : "Tambah Slider"}
         </button>
       </form>
 
-      {/* LIST SLIDER */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {sliders.map((s) => (
-          <SliderCardAdmin
-            key={s.id}
-            slider={s}
-            onDelete={handleDelete}
-            onUpdated={fetchSliders}
-          />
-        ))}
-      </div>
+      {/* LIST + DRAG */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={sliders.map((s) => s.id)}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid md:grid-cols-3 gap-6">
+            {sliders.map((s, i) => (
+              <SliderCardAdmin
+                key={s.id}
+                slider={s}
+                index={i}
+                onToggle={() => toggleActive(s)}
+                onDelete={() => handleDelete(s.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 }

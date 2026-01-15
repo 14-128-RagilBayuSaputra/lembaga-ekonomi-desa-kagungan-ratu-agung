@@ -12,12 +12,9 @@ export default function Koperasi() {
 
   useEffect(() => {
     api
-      .get("/products")
+      .get("/products?category=Koperasi")
       .then((res) => {
-        const filtered = res.data.data.filter(
-          (p) => p.category?.name === "Koperasi"
-        );
-        setProducts(filtered);
+        setProducts(res.data.data || []);
       })
       .catch(console.error);
   }, []);
@@ -28,10 +25,12 @@ export default function Koperasi() {
       <HeroSlider />
 
       <section className="max-w-7xl mx-auto px-4 py-12">
-        <h2 className="text-2xl font-bold mb-6">Produk Koperasi</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          Produk Koperasi Merah Putih
+        </h2>
 
         {products.length === 0 ? (
-          <p className="text-gray-500">Belum ada produk Koperasi</p>
+          <p className="text-gray-500">Belum ada produk koperasi</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {products.map((item) => (
