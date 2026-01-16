@@ -1,77 +1,82 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { FaBars, FaTimes, FaUserLock } from "react-icons/fa"; // Pastikan install react-icons
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { FaBars, FaTimes, FaUserLock } from "react-icons/fa";
+
+// IMPORT LOGO BARU
+import logoTiyuh from "../../assets/logo.jpeg"; 
 
 export default function Navbar() {
-  const [open, setOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  const goTo = (path) => {
-    navigate(path);
-    setOpen(false);
-  };
+  const toggleMenu = () => setIsOpen(!isOpen);
+  const closeMenu = () => setIsOpen(false);
 
-  const isActive = (path) =>
-    location.pathname === path
-      ? "text-desa-primary font-bold border-b-2 border-desa-primary"
-      : "text-gray-600 hover:text-desa-primary transition-colors duration-300";
+  const isActive = (path) => 
+    location.pathname === path ? "text-green-600 font-bold" : "text-gray-600 hover:text-green-600";
 
   return (
-    <nav className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all">
-      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+    <nav className="bg-white shadow-md sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex justify-between items-center">
         
-        {/* LOGO */}
-        <div onClick={() => goTo("/")} className="flex items-center gap-2 cursor-pointer group">
-            {/* Opsional: Tambahkan logo desa disini jika ada */}
-            <h1 className="font-bold text-2xl text-desa-primary tracking-tight group-hover:text-desa-dark transition">
-              Ekonomi<span className="text-gray-800">Desa</span>
+        {/* === LOGO & NAMA BARU === */}
+        <div 
+          onClick={() => navigate("/")} 
+          className="flex items-center gap-3 cursor-pointer group"
+        >
+          {/* Logo Gambar */}
+          <img 
+            src={logoTiyuh} 
+            alt="Logo Tiyuh" 
+            className="w-10 h-10 md:w-12 md:h-12 object-contain group-hover:scale-105 transition transform"
+          />
+          
+          {/* Teks Nama Web */}
+          <div className="flex flex-col">
+            <h1 className="font-bold text-lg md:text-xl text-gray-800 tracking-tight leading-none">
+              LembagaEkonomi<span className="text-green-600">Tiyuh</span>
             </h1>
+            <span className="text-[10px] md:text-xs text-gray-500 tracking-wide font-medium">
+              Kagungan Ratu Agung
+            </span>
+          </div>
         </div>
 
-        {/* DESKTOP MENU */}
-        <ul className="hidden md:flex space-x-8 items-center font-medium text-sm tracking-wide">
-          {["/", "/bumdes", "/umkm", "/koperasi"].map((path) => (
-            <li
-              key={path}
-              onClick={() => goTo(path)}
-              className={`cursor-pointer py-1 ${isActive(path)}`}
-            >
-              {path === "/" ? "BERANDA" : path.replace("/", "").toUpperCase()}
-            </li>
-          ))}
+        {/* MENU DESKTOP */}
+        <div className="hidden md:flex items-center space-x-8 font-medium text-sm">
+          <Link to="/" className={isActive("/")}>BERANDA</Link>
+          <Link to="/bumdes" className={isActive("/bumdes")}>BUMDES</Link>
+          <Link to="/umkm" className={isActive("/umkm")}>UMKM</Link>
+          <Link to="/koperasi" className={isActive("/koperasi")}>KOPERASI</Link>
 
-          {/* LOGIN ADMIN BUTTON */}
           <button
-            onClick={() => goTo("/admin/login")}
-            className="ml-6 px-5 py-2 bg-desa-primary text-white rounded-full font-semibold hover:bg-desa-dark hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
+            onClick={() => navigate("/admin/login")}
+            className="px-5 py-2 bg-green-600 text-white rounded-full font-semibold hover:bg-green-700 transition flex items-center gap-2 shadow-md hover:shadow-lg transform active:scale-95"
           >
-            <FaUserLock className="text-sm"/> Admin Login
+            <FaUserLock className="text-sm"/> Login Admin
           </button>
-        </ul>
+        </div>
 
-        {/* MOBILE TOGGLE */}
-        <button
-          className="md:hidden text-2xl text-gray-700 focus:outline-none"
-          onClick={() => setOpen(!open)}
-        >
-          {open ? <FaTimes /> : <FaBars />}
+        {/* TOMBOL HAMBURGER (Mobile) */}
+        <button onClick={toggleMenu} className="md:hidden text-2xl text-gray-700 focus:outline-none p-2">
+          {isOpen ? <FaTimes /> : <FaBars />}
         </button>
       </div>
 
-      {/* MOBILE MENU */}
-      <div className={`md:hidden bg-white border-t overflow-hidden transition-all duration-300 ${open ? "max-h-screen py-4 opacity-100" : "max-h-0 opacity-0"}`}>
-        <div className="flex flex-col space-y-2 px-4">
-          {["/", "/bumdes", "/umkm", "/koperasi"].map((path) => (
-             <div key={path} onClick={() => goTo(path)} className={`p-3 rounded-lg ${location.pathname === path ? 'bg-desa-light text-desa-primary font-bold' : 'text-gray-600'}`}>
-                {path === "/" ? "Beranda" : path.replace("/", "").toUpperCase()}
-             </div>
-          ))}
+      {/* MENU MOBILE (Slide Down) */}
+      <div className={`md:hidden bg-white border-t border-gray-100 overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="flex flex-col p-4 space-y-4 font-medium text-center">
+          <Link to="/" onClick={closeMenu} className={`py-2 ${isActive("/")}`}>BERANDA</Link>
+          <Link to="/bumdes" onClick={closeMenu} className={`py-2 ${isActive("/bumdes")}`}>BUMDES</Link>
+          <Link to="/umkm" onClick={closeMenu} className={`py-2 ${isActive("/umkm")}`}>UMKM</Link>
+          <Link to="/koperasi" onClick={closeMenu} className={`py-2 ${isActive("/koperasi")}`}>KOPERASI</Link>
+          
           <button
-            onClick={() => goTo("/admin/login")}
-            className="mt-4 w-full bg-desa-primary text-white py-3 rounded-lg font-bold shadow-md active:scale-95 transition"
+            onClick={() => { closeMenu(); navigate("/admin/login"); }}
+            className="w-full py-3 bg-green-600 text-white rounded-xl font-bold mt-2 shadow-md"
           >
-            Login Admin Area
+            Login Admin
           </button>
         </div>
       </div>

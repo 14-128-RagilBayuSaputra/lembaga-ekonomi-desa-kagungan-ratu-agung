@@ -16,7 +16,6 @@ export default function UMKM() {
     api.get("/products")
       .then((res) => {
         const data = res.data.data || [];
-        // Filter khusus UMKM
         const filtered = data.filter(p => p.category?.name === "UMKM" || p.category_id === 2);
         setProducts(filtered);
       })
@@ -29,31 +28,36 @@ export default function UMKM() {
       <Navbar />
       <HeroSlider isAdmin={false} />
 
-      {/* === BAGIAN DESKRIPSI (BARU) === */}
-      <section className="py-12 bg-white border-b border-gray-200">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-            <h1 className="text-3xl font-bold text-green-700 mb-4">Usaha Mikro, Kecil, dan Menengah (UMKM)</h1>
-            <div className="w-24 h-1 bg-yellow-400 mx-auto mb-6 rounded-full"></div>
-            <p className="text-lg text-gray-600 leading-relaxed">
-                Temukan berbagai produk kreatif dan olahan rumahan asli buatan warga desa kami. 
-                Dari kuliner lezat hingga kerajinan tangan unik, setiap produk UMKM yang Anda beli 
-                turut membantu memutar roda perekonomian keluarga di desa.
+      {/* DESKRIPSI RESPONSIF */}
+      <section className="py-8 md:py-12 bg-white border-b border-gray-200">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-green-700 mb-3">
+                UMKM Desa
+            </h1>
+            <div className="w-16 md:w-24 h-1 bg-yellow-400 mx-auto mb-4 rounded-full"></div>
+            <p className="text-sm md:text-lg text-gray-600 leading-relaxed">
+                Temukan berbagai produk kreatif dan olahan rumahan asli buatan warga. 
+                Setiap produk yang Anda beli turut memutar roda perekonomian keluarga di desa.
             </p>
         </div>
       </section>
 
-      {/* === DAFTAR PRODUK === */}
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 border-l-4 border-green-600 pl-4">Jelajahi Produk UMKM</h2>
+      {/* GRID PRODUK 2 KOLOM DI HP */}
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12">
+        <h2 className="text-lg md:text-2xl font-bold mb-4 md:mb-6 text-gray-800 border-l-4 border-green-600 pl-4">
+            Jelajahi Produk UMKM
+        </h2>
         
         {loading ? (
-           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
               {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
            </div>
         ) : products.length === 0 ? (
-           <p className="text-center text-gray-500 py-10">Belum ada produk UMKM yang ditampilkan.</p>
+           <div className="text-center py-12 bg-white rounded-xl border border-dashed">
+               <p className="text-gray-500 text-sm">Belum ada produk UMKM.</p>
+           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
             {products.map((item) => (
               <ProductCard
                 key={item.id}
@@ -66,10 +70,7 @@ export default function UMKM() {
         )}
       </div>
 
-      <ProductDetailModal 
-        product={selectedProduct} 
-        onClose={() => setSelectedProduct(null)} 
-      />
+      <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
     </div>
   );
 }
