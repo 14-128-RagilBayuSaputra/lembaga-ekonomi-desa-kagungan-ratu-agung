@@ -8,66 +8,74 @@ import Bumdes from "../pages/category/BUMDes";
 import Umkm from "../pages/category/UMKM";
 import Koperasi from "../pages/category/Koperasi";
 
-/* ADMIN */
+/* ADMIN AUTH */
 import Login from "../pages/admin/Login";
 import ResetAdmin from "../pages/admin/ResetAdmin";
-import Dashboard from "../pages/admin/Dashboard";
+
+/* ADMIN PAGES */
 import BUMDesAdmin from "../pages/admin/BUMDesAdmin";
 import UMKMAdmin from "../pages/admin/UMKMAdmin";
 import KoperasiAdmin from "../pages/admin/KoperasiAdmin";
+import AdminHome from "../pages/admin/AdminHome"; 
 
-
-/* ADMIN LAYOUT */
-import AdminLayout from "../components/admin/AdminLayout";
+/* PENTING: IMPORT PRIVATE ROUTE */
+// Pastikan file ini ada. Jika belum, lihat kode di bawah.
+import PrivateRoute from "../components/auth/PrivateRoute"; 
 
 export default function AppRoutes() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* USER */}
+        {/* === USER ROUTES === */}
         <Route path="/" element={<Home />} />
         <Route path="/bumdes" element={<Bumdes />} />
         <Route path="/umkm" element={<Umkm />} />
         <Route path="/koperasi" element={<Koperasi />} />
 
-        {/* ADMIN AUTH */}
+        {/* === ADMIN AUTH === */}
         <Route path="/admin/login" element={<Login />} />
         <Route path="/admin/reset" element={<ResetAdmin />} />
-        <Route
-        path="/admin/bumdes"
-        element={
-       <AdminLayout>
-       <BUMDesAdmin />
-      </AdminLayout>
-      }
-      />
 
-<Route
-  path="/admin/umkm"
-  element={
-    <AdminLayout>
-      <UMKMAdmin />
-    </AdminLayout>
-  }
-/>
-
-<Route
-  path="/admin/koperasi"
-  element={
-    <AdminLayout>
-      <KoperasiAdmin />
-    </AdminLayout>
-  }
-/>
-
-
-        {/* ADMIN DASHBOARD (PROTECTED) */}
-        <Route
-          path="/admin/dashboard"
+        {/* === ADMIN PAGES === */}
+        {/* CATATAN PENTING:
+            Kita MEMBUNGKUS dengan <PrivateRoute> agar aman.
+            Kita TIDAK MEMBUNGKUS dengan <AdminLayout> agar tampilan Full Width
+            (Karena AdminNavbar sudah ada di dalam masing-masing halaman).
+        */}
+        
+        <Route 
+          path="/admin/dashboard" 
           element={
-            <AdminLayout>
-              <Dashboard />
-            </AdminLayout>
+            <PrivateRoute>
+              <AdminHome />
+            </PrivateRoute>
+          } 
+        />
+
+        <Route
+          path="/admin/bumdes"
+          element={
+            <PrivateRoute>
+               <BUMDesAdmin />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/admin/umkm"
+          element={
+            <PrivateRoute>
+               <UMKMAdmin />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/admin/koperasi"
+          element={
+            <PrivateRoute>
+               <KoperasiAdmin />
+            </PrivateRoute>
           }
         />
       </Routes>

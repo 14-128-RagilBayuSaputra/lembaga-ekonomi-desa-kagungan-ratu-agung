@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { FaBars, FaTimes, FaUserLock } from "react-icons/fa"; // Pastikan install react-icons
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -13,108 +14,67 @@ export default function Navbar() {
 
   const isActive = (path) =>
     location.pathname === path
-      ? "text-green-600 font-semibold"
-      : "hover:text-green-600";
+      ? "text-desa-primary font-bold border-b-2 border-desa-primary"
+      : "text-gray-600 hover:text-desa-primary transition-colors duration-300";
 
   return (
-    <nav className="bg-white shadow sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+    <nav className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 transition-all">
+      <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
         
         {/* LOGO */}
-        <h1
-          onClick={() => goTo("/")}
-          className="font-bold text-green-600 cursor-pointer text-lg"
-        >
-          Lembaga Ekonomi Desa
-        </h1>
+        <div onClick={() => goTo("/")} className="flex items-center gap-2 cursor-pointer group">
+            {/* Opsional: Tambahkan logo desa disini jika ada */}
+            <h1 className="font-bold text-2xl text-desa-primary tracking-tight group-hover:text-desa-dark transition">
+              Ekonomi<span className="text-gray-800">Desa</span>
+            </h1>
+        </div>
 
         {/* DESKTOP MENU */}
-        <ul className="hidden md:flex space-x-6 items-center font-medium">
-          <li
-            onClick={() => goTo("/")}
-            className={`cursor-pointer ${isActive("/")}`}
-          >
-            Beranda
-          </li>
+        <ul className="hidden md:flex space-x-8 items-center font-medium text-sm tracking-wide">
+          {["/", "/bumdes", "/umkm", "/koperasi"].map((path) => (
+            <li
+              key={path}
+              onClick={() => goTo(path)}
+              className={`cursor-pointer py-1 ${isActive(path)}`}
+            >
+              {path === "/" ? "BERANDA" : path.replace("/", "").toUpperCase()}
+            </li>
+          ))}
 
-          <li
-            onClick={() => goTo("/bumdes")}
-            className={`cursor-pointer ${isActive("/bumdes")}`}
-          >
-            BUMDes
-          </li>
-
-          <li
-            onClick={() => goTo("/umkm")}
-            className={`cursor-pointer ${isActive("/umkm")}`}
-          >
-            UMKM
-          </li>
-
-          <li
-            onClick={() => goTo("/koperasi")}
-            className={`cursor-pointer ${isActive("/koperasi")}`}
-          >
-            Koperasi
-          </li>
-
-          {/* LOGIN ADMIN */}
+          {/* LOGIN ADMIN BUTTON */}
           <button
             onClick={() => goTo("/admin/login")}
-            className="ml-4 px-4 py-2 border border-green-600 text-green-600 rounded-lg hover:bg-green-600 hover:text-white transition"
+            className="ml-6 px-5 py-2 bg-desa-primary text-white rounded-full font-semibold hover:bg-desa-dark hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2"
           >
-            Login Admin
+            <FaUserLock className="text-sm"/> Admin Login
           </button>
         </ul>
 
         {/* MOBILE TOGGLE */}
         <button
-          className="md:hidden text-2xl"
+          className="md:hidden text-2xl text-gray-700 focus:outline-none"
           onClick={() => setOpen(!open)}
         >
-          ☰
+          {open ? <FaTimes /> : <FaBars />}
         </button>
       </div>
 
       {/* MOBILE MENU */}
-      {open && (
-        <div className="md:hidden bg-white border-t px-4 py-4 space-y-4 text-sm font-medium">
-          <div
-            onClick={() => goTo("/")}
-            className="cursor-pointer hover:text-green-600"
-          >
-            Beranda
-          </div>
-
-          <div
-            onClick={() => goTo("/bumdes")}
-            className="cursor-pointer hover:text-green-600"
-          >
-            BUMDes
-          </div>
-
-          <div
-            onClick={() => goTo("/umkm")}
-            className="cursor-pointer hover:text-green-600"
-          >
-            UMKM
-          </div>
-
-          <div
-            onClick={() => goTo("/koperasi")}
-            className="cursor-pointer hover:text-green-600"
-          >
-            Koperasi
-          </div>
-
+      <div className={`md:hidden bg-white border-t overflow-hidden transition-all duration-300 ${open ? "max-h-screen py-4 opacity-100" : "max-h-0 opacity-0"}`}>
+        <div className="flex flex-col space-y-2 px-4">
+          {["/", "/bumdes", "/umkm", "/koperasi"].map((path) => (
+             <div key={path} onClick={() => goTo(path)} className={`p-3 rounded-lg ${location.pathname === path ? 'bg-desa-light text-desa-primary font-bold' : 'text-gray-600'}`}>
+                {path === "/" ? "Beranda" : path.replace("/", "").toUpperCase()}
+             </div>
+          ))}
           <button
             onClick={() => goTo("/admin/login")}
-            className="w-full border border-green-600 text-green-600 py-2 rounded-lg hover:bg-green-600 hover:text-white transition"
+            className="mt-4 w-full bg-desa-primary text-white py-3 rounded-lg font-bold shadow-md active:scale-95 transition"
           >
-            Login Admin
+            Login Admin Area
           </button>
         </div>
-      )}
+      </div>
     </nav>
   );
 }
