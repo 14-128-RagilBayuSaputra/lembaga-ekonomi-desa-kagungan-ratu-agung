@@ -1,63 +1,71 @@
-import { FaStore, FaEdit, FaTrash } from "react-icons/fa";
+import { FaMapMarkerAlt, FaWhatsapp, FaEdit, FaTrash, FaStore } from "react-icons/fa";
 
-export default function ProductCard({ product, onClick, isAdmin, onEdit, onDelete }) {
+export default function ProductCard({ product, isAdmin, onEdit, onDelete, onClick }) {
+  
   const formatRupiah = (price) => {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(price);
   };
 
   return (
     <div 
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer group hover:shadow-lg hover:-translate-y-1 transition duration-300 flex flex-col h-full"
+      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full cursor-pointer group hover:shadow-md transition-all duration-300"
     >
-      {/* GAMBAR: HP h-36 (lebih pendek biar ringkas), Laptop h-48 */}
-      <div className="h-36 md:h-48 bg-gray-100 relative overflow-hidden flex-shrink-0">
+      {/* BAGIAN GAMBAR */}
+      {/* Mobile: h-32 (pendek), Desktop: h-48 (tinggi) */}
+      <div className="relative h-32 md:h-48 bg-gray-100 overflow-hidden">
         <img 
-          src={product.image_url} 
+          src={product.image_url || "https://via.placeholder.com/300"} 
           alt={product.product_name} 
-          className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        {product.category?.name && (
-          <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 rounded text-[10px] font-bold text-gray-700 shadow-sm backdrop-blur-sm">
-            {product.category.name}
-          </div>
-        )}
+        {/* Badge Kategori */}
+        <div className="absolute top-2 left-2 bg-white/90 backdrop-blur-sm px-2 py-0.5 rounded text-[9px] md:text-[10px] font-bold text-gray-700 shadow-sm border border-gray-100">
+          {product.category?.name || "Umum"}
+        </div>
       </div>
 
-      {/* KONTEN */}
-      <div className="p-3 flex flex-col flex-1">
-        
-        {/* Judul & Harga */}
-        <div className="mb-2">
-            <h3 className="font-bold text-gray-900 text-xs md:text-sm line-clamp-2 leading-snug group-hover:text-green-600 transition">
-                {product.product_name}
-            </h3>
-            <div className="font-bold text-green-600 text-xs md:text-sm mt-1">
-                {formatRupiah(product.price)}
-            </div>
+      {/* BAGIAN TEXT */}
+      <div className="p-3 md:p-4 flex flex-col flex-1">
+        {/* Nama Produk: Text kecil di HP */}
+        <h3 className="font-bold text-gray-800 text-xs md:text-base line-clamp-2 mb-1 leading-tight">
+            {product.product_name}
+        </h3>
+
+        {/* Nama Toko */}
+        <div className="flex items-center gap-1 text-[10px] md:text-xs text-gray-500 mb-2 md:mb-3">
+            <FaStore className="text-gray-300"/> 
+            <span className="truncate max-w-[120px]">{product.business_name}</span>
         </div>
 
-        {/* Toko */}
-        <p className="text-[10px] text-gray-500 flex items-center gap-1 mb-3 mt-auto">
-            <FaStore className="text-gray-300"/> 
-            <span className="line-clamp-1">{product.business_name}</span>
-        </p>
+        {/* Harga & Lokasi */}
+        <div className="mt-auto flex items-center justify-between border-t border-gray-50 pt-2 md:pt-3">
+            <span className="text-xs md:text-sm font-bold text-green-600">
+                {formatRupiah(product.price)}
+            </span>
+            {product.maps_url && (
+                <FaMapMarkerAlt className="text-gray-300 text-[10px] md:text-xs" />
+            )}
+        </div>
 
-        {/* TOMBOL AKSI (RESPONSIF) */}
+        {/* TOMBOL EDIT/HAPUS (KHUSUS ADMIN) */}
         {isAdmin && (
-            <div className="flex gap-2 pt-2 border-t border-gray-100 mt-auto">
-                {/* Tombol menggunakan flex-1 agar berbagi ruang rata */}
+            <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-gray-100">
                 <button 
                     onClick={(e) => { e.stopPropagation(); onEdit(product); }}
-                    className="flex-1 bg-yellow-50 text-yellow-600 py-1.5 rounded-md text-[10px] md:text-xs font-bold hover:bg-yellow-100 border border-yellow-200 flex items-center justify-center gap-1"
+                    className="flex items-center justify-center gap-1 bg-yellow-50 text-yellow-600 py-1.5 rounded text-[10px] md:text-xs font-bold hover:bg-yellow-100 transition"
                 >
-                    <FaEdit /> <span className="">Edit</span>
+                    <FaEdit /> Edit
                 </button>
                 <button 
                     onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}
-                    className="flex-1 bg-red-50 text-red-600 py-1.5 rounded-md text-[10px] md:text-xs font-bold hover:bg-red-100 border border-red-200 flex items-center justify-center gap-1"
+                    className="flex items-center justify-center gap-1 bg-red-50 text-red-600 py-1.5 rounded text-[10px] md:text-xs font-bold hover:bg-red-100 transition"
                 >
-                    <FaTrash /> <span className="">Hapus</span>
+                    <FaTrash /> Hapus
                 </button>
             </div>
         )}

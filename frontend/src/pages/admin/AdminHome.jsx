@@ -1,152 +1,152 @@
-import { useEffect, useState } from "react";
-import { FaStore, FaHandshake, FaBullhorn, FaArrowRight, FaChartLine } from "react-icons/fa";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { FaStore, FaHandshake, FaBullhorn, FaArrowRight, FaBoxOpen, FaLeaf } from "react-icons/fa";
 import api from "../../api/axios";
 
-// COMPONENTS
-import NavbarAdmin from "../../components/admin/NavbarAdmin"; 
-import HeroSlider from "../../components/common/HeroSlider"; 
-import ProductDetailModal from "../../components/ui/ProductDetailModal"; 
+import NavbarAdmin from "../../components/admin/NavbarAdmin";
+import HeroSlider from "../../components/common/HeroSlider";
 
 export default function AdminHome() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedProduct, setSelectedProduct] = useState(null);
   const navigate = useNavigate();
+  const [recentProducts, setRecentProducts] = useState([]);
 
   useEffect(() => {
-    fetchProducts();
+    api.get("/products") // Endpoint public untuk preview
+      .then((res) => {
+        const all = res.data.data || [];
+        setRecentProducts(all.slice(0, 4));
+      })
+      .catch((err) => console.error(err));
   }, []);
 
-  const fetchProducts = () => {
-    setLoading(true);
-    api.get("/products")
-      .then((res) => {
-        setProducts(res.data.data || []);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  };
+  const menus = [
+    {
+      title: "Kelola BUMDes",
+      subtitle: "Pendapatan Asli Desa",
+      path: "/admin/bumdes",
+      icon: <FaStore className="text-xl md:text-3xl" />, // Icon lebih kecil di HP
+      color: "green",
+      shadow: "hover:shadow-green-200",
+      bgIcon: "bg-green-100",
+      textIcon: "text-green-600",
+      borderColor: "hover:border-green-300"
+    },
+    {
+      title: "Kelola Koperasi",
+      subtitle: "Kesejahteraan Anggota",
+      path: "/admin/koperasi",
+      icon: <FaHandshake className="text-xl md:text-3xl" />,
+      color: "blue",
+      shadow: "hover:shadow-blue-200",
+      bgIcon: "bg-blue-100",
+      textIcon: "text-blue-600",
+      borderColor: "hover:border-blue-300"
+    },
+    {
+      title: "Kelola UMKM",
+      subtitle: "Ekonomi Kreatif Warga",
+      path: "/admin/umkm",
+      icon: <FaBullhorn className="text-xl md:text-3xl" />,
+      color: "orange",
+      shadow: "hover:shadow-orange-200",
+      bgIcon: "bg-orange-100",
+      textIcon: "text-orange-600",
+      borderColor: "hover:border-orange-300"
+    },
+  ];
 
   return (
-    // 1. BACKGROUND GRADIENT (Putih ke Hijau Muda Halus)
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-green-50 font-sans text-gray-800 pb-20">
+    <div className="min-h-screen bg-gray-50 pb-20 font-sans text-gray-800">
       
       <NavbarAdmin />
 
-      {/* 2. SLIDER */}
-      <div className="relative">
+      {/* HERO SECTION */}
+      <div className="relative mb-8 md:mb-12">
         <HeroSlider isAdmin={true} isHomePage={true} />
         
-        {/* 3. FLOATING CARD (KOTAK MENGAMBANG) */}
-        {/* -mt-16 artinya kotak ini naik ke atas menutupi sebagian slider */}
-        <div className="max-w-6xl mx-auto px-4 relative z-10 -mt-16">
-            <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-green-500 text-center">
-                <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 text-green-600 rounded-full mb-4 shadow-sm">
-                    <FaChartLine className="text-2xl" />
+        {/* KARTU WELCOME (Responsive Padding & Margin) */}
+        <div className="max-w-5xl mx-auto px-4 -mt-12 md:-mt-16 relative z-40">
+            <div className="bg-white rounded-2xl shadow-xl p-5 md:p-8 text-center border-b-4 border-green-500 animate-fade-in-up">
+                <div className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-green-100 text-green-600 rounded-full mb-2 md:mb-3">
+                    <FaLeaf className="text-sm md:text-base"/>
                 </div>
-                <h2 className="text-3xl font-extrabold text-gray-900 mb-3">
+                <h1 className="text-lg md:text-3xl font-extrabold text-gray-900 mb-1 md:mb-2">
                     Panel Admin <span className="text-green-600">Terpadu</span>
-                </h2>
-                <div className="w-20 h-1.5 bg-gradient-to-r from-green-400 to-green-600 mx-auto mb-5 rounded-full"></div>
-                <p className="max-w-3xl mx-auto text-gray-500 text-base leading-relaxed">
-                   Selamat datang di pusat kendali Lembaga Ekonomi Tiyuh. Kelola potensi <b>BUMDes, UMKM, dan Koperasi</b> secara efisien. 
-                   Pastikan data selalu diperbarui untuk transparansi dan promosi yang maksimal.
+                </h1>
+                <p className="text-xs md:text-base text-gray-500 mt-1 max-w-2xl mx-auto leading-relaxed">
+                    Kelola potensi <b>BUMDes, UMKM, dan Koperasi</b> secara efisien.
                 </p>
             </div>
         </div>
       </div>
 
-      {/* 4. SHORTCUT KATEGORI (Cards dengan Hover Effect) */}
-      <section className="py-12 max-w-7xl mx-auto px-4">
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* Card BUMDes */}
-            <div 
-                onClick={() => navigate("/admin/bumdes")}
-                className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 flex flex-col items-center text-center cursor-pointer group hover:-translate-y-2 hover:shadow-xl transition duration-300"
-            >
-                <div className="w-16 h-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:bg-green-600 group-hover:text-white transition duration-300">
-                    <FaStore />
-                </div>
-                <h3 className="font-bold text-xl text-gray-800 mb-1">Kelola BUMDes</h3>
-                <p className="text-sm text-gray-400 mb-4">Pendapatan Asli Desa</p>
-                <span className="text-green-600 text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
-                    Buka Halaman <FaArrowRight />
-                </span>
-            </div>
-
-            {/* Card Koperasi */}
-            <div 
-                onClick={() => navigate("/admin/koperasi")}
-                className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 flex flex-col items-center text-center cursor-pointer group hover:-translate-y-2 hover:shadow-xl transition duration-300"
-            >
-                <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:bg-blue-600 group-hover:text-white transition duration-300">
-                    <FaHandshake />
-                </div>
-                <h3 className="font-bold text-xl text-gray-800 mb-1">Kelola Koperasi</h3>
-                <p className="text-sm text-gray-400 mb-4">Kesejahteraan Anggota</p>
-                <span className="text-blue-600 text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
-                    Buka Halaman <FaArrowRight />
-                </span>
-            </div>
-
-            {/* Card UMKM */}
-            <div 
-                onClick={() => navigate("/admin/umkm")}
-                className="bg-white p-8 rounded-2xl shadow-md border border-gray-100 flex flex-col items-center text-center cursor-pointer group hover:-translate-y-2 hover:shadow-xl transition duration-300"
-            >
-                <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-3xl mb-4 group-hover:bg-orange-600 group-hover:text-white transition duration-300">
-                    <FaBullhorn />
-                </div>
-                <h3 className="font-bold text-xl text-gray-800 mb-1">Kelola UMKM</h3>
-                <p className="text-sm text-gray-400 mb-4">Ekonomi Kreatif Warga</p>
-                <span className="text-orange-600 text-sm font-bold flex items-center gap-2 group-hover:gap-3 transition-all">
-                    Buka Halaman <FaArrowRight />
-                </span>
-            </div>
-         </div>
-      </section>
-
-      {/* 5. PREVIEW PRODUK */}
-      <section className="max-w-7xl mx-auto px-4">
-        <div className="flex items-center gap-4 mb-8">
-            <div className="h-10 w-1.5 bg-green-600 rounded-full"></div>
-            <div>
-                <h2 className="text-2xl font-bold text-gray-800">Preview Produk</h2>
-                <p className="text-sm text-gray-500">Tampilan produk terkini di mata pengunjung.</p>
-            </div>
-        </div>
-
-        {loading ? (
-             <div className="text-center py-12 text-gray-400 bg-white rounded-xl shadow-sm">Memuat data...</div>
-        ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {products.map((item) => (
+      {/* MENU KATEGORI - Grid 2 Kolom di Mobile */}
+      <div className="max-w-7xl mx-auto px-4 mb-8 md:mb-12">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
+            {menus.map((item, index) => (
                 <div 
-                    key={item.id} 
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-lg hover:-translate-y-1 transition duration-300 cursor-pointer group"
-                    onClick={() => setSelectedProduct(item)} 
+                    key={index}
+                    onClick={() => navigate(item.path)}
+                    // Padding kecil di mobile (p-4)
+                    className={`
+                        bg-white rounded-xl md:rounded-2xl p-4 md:p-6 cursor-pointer group relative overflow-hidden
+                        border border-gray-100 transition-all duration-300 ease-in-out
+                        shadow-sm hover:shadow-xl hover:-translate-y-2
+                        ${item.shadow} ${item.borderColor}
+                    `}
                 >
-                    <div className="h-48 bg-gray-100 relative overflow-hidden">
-                        <img src={item.image_url} alt={item.product_name} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-                        <div className="absolute top-3 left-3 bg-white/95 px-3 py-1 rounded-full text-[10px] font-bold text-gray-700 shadow-md">
-                            {item.category?.name}
+                    <div className="flex flex-col items-center text-center relative z-10">
+                        <div className={`w-10 h-10 md:w-16 md:h-16 rounded-full flex items-center justify-center mb-2 md:mb-4 transition-transform duration-300 group-hover:scale-110 ${item.bgIcon} ${item.textIcon}`}>
+                            {item.icon}
                         </div>
-                    </div>
-                    <div className="p-5">
-                        <h3 className="font-bold text-gray-800 text-base line-clamp-1 mb-1 group-hover:text-green-600 transition">{item.product_name}</h3>
-                        <p className="text-xs text-gray-500 font-medium flex items-center gap-1">
-                            <FaStore className="text-gray-300"/> {item.business_name}
-                        </p>
+                        <h3 className="text-xs md:text-lg font-bold text-gray-800 group-hover:text-gray-900">{item.title}</h3>
+                        <p className="text-[10px] md:text-sm text-gray-500 mb-2 md:mb-4 line-clamp-1 md:line-clamp-none">{item.subtitle}</p>
+                        <span className={`text-[9px] md:text-xs font-bold uppercase tracking-wider flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-300 translate-y-2 group-hover:translate-y-0 ${item.textIcon}`}>
+                            Buka <FaArrowRight />
+                        </span>
                     </div>
                 </div>
             ))}
-            </div>
-        )}
-      </section>
+        </div>
+      </div>
 
-      <ProductDetailModal product={selectedProduct} onClose={() => setSelectedProduct(null)} />
+      {/* PREVIEW PRODUK - Grid 2 Kolom di Mobile */}
+      <div className="max-w-7xl mx-auto px-4">
+          <div className="flex items-center gap-2 mb-4 md:mb-6 pl-2 border-l-4 border-green-600">
+              <h2 className="text-lg md:text-xl font-bold text-gray-800">Preview Produk</h2>
+              <span className="text-[10px] md:text-xs text-gray-500 bg-gray-200 px-2 py-1 rounded-full">Live</span>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
+              {recentProducts.length > 0 ? (
+                  recentProducts.map((product) => (
+                      <div key={product.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col hover:shadow-md transition">
+                          <div className="h-32 md:h-40 bg-gray-100 relative">
+                              <img src={product.image_url} alt={product.product_name} className="w-full h-full object-cover" />
+                              <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 rounded text-[9px] md:text-[10px] font-bold text-gray-700 shadow-sm">
+                                  {product.category?.name}
+                              </div>
+                          </div>
+                          <div className="p-3 md:p-4 flex-1 flex flex-col">
+                              <h4 className="font-bold text-gray-800 text-xs md:text-sm line-clamp-1">{product.product_name}</h4>
+                              <p className="text-[10px] md:text-xs text-gray-500 mb-2 flex items-center gap-1"><FaStore className="text-gray-300"/> <span className="truncate w-20">{product.business_name}</span></p>
+                              <div className="mt-auto pt-2 border-t border-gray-50 flex justify-between items-center">
+                                  <span className="text-xs md:text-sm font-bold text-green-600">
+                                    {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(product.price)}
+                                  </span>
+                              </div>
+                          </div>
+                      </div>
+                  ))
+              ) : (
+                  <div className="col-span-full text-center py-10 bg-white rounded-xl border border-dashed border-gray-300 text-gray-400">
+                      <FaBoxOpen className="mx-auto text-3xl mb-2 opacity-50"/>
+                      <p>Belum ada produk yang diupload.</p>
+                  </div>
+              )}
+          </div>
+      </div>
+
     </div>
   );
 }

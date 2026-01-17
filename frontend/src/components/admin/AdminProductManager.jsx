@@ -23,11 +23,9 @@ export default function AdminProductManager({ title, categoryId, description }) 
   // --- LOGIC FETCH ---
   const fetchProducts = () => {
     setLoading(true);
-    // PERBAIKAN 1: Gunakan endpoint ADMIN agar konsisten
     api.get("/admin/products") 
       .then((res) => {
         const allProducts = res.data.data || [];
-        // Filter berdasarkan kategori halaman saat ini (BUMDes/UMKM/Koperasi)
         const filtered = allProducts.filter(p => 
             p.category_id === categoryId || p.category?.id === categoryId
         );
@@ -49,28 +47,25 @@ export default function AdminProductManager({ title, categoryId, description }) 
   const handleAddClick = () => { setEditData(null); setIsModalOpen(true); };
   const handleEditClick = (product) => { setEditData(product); setIsModalOpen(true); };
   
-  // --- LOGIC DELETE ---
   const handleDeleteClick = async (id) => {
     const result = await Swal.fire({
-        title: 'Hapus Produk?',
+        title: 'Hapus?',
         text: "Data tidak bisa dikembalikan!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Hapus!'
+        confirmButtonText: 'Hapus!'
     });
 
     if (result.isConfirmed) {
         try { 
-            // PERBAIKAN 2: Tambahkan '/admin' di URL delete
             await api.delete(`/admin/products/${id}`); 
-            
-            Swal.fire('Terhapus!', 'Produk telah dihapus.', 'success');
-            fetchProducts(); // Refresh data
+            Swal.fire('Terhapus!', 'Produk dihapus.', 'success');
+            fetchProducts(); 
         } catch (e) { 
             console.error(e);
-            Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus.', 'error');
+            Swal.fire('Gagal', 'Terjadi kesalahan.', 'error');
         }
     }
   };
@@ -80,35 +75,35 @@ export default function AdminProductManager({ title, categoryId, description }) 
       
       <NavbarAdmin /> 
       
-      <div className="relative mb-8"> 
+      <div className="relative mb-8 md:mb-12"> 
          <HeroSlider isAdmin={true} />
          
-         <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
-            <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-green-500 text-center">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-full mb-3">
-                    <FaLeaf />
+         {/* KARTU JUDUL HALAMAN (Responsive) */}
+         <div className="max-w-5xl mx-auto px-4 -mt-12 md:-mt-16 relative z-40">
+            <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-t-4 border-green-500 text-center animate-fade-in-up">
+                <div className="inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-green-100 text-green-600 rounded-full mb-2 md:mb-3">
+                    <FaLeaf className="text-sm md:text-base"/>
                 </div>
-                <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+                <h1 className="text-xl md:text-3xl font-extrabold text-gray-900 mb-1 md:mb-2">
                     Kelola <span className="text-green-600">{title}</span>
                 </h1>
-                <div className="w-16 h-1 bg-green-200 mx-auto mb-4 rounded-full"></div>
-                <p className="text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                    {description || `Kelola data produk ${title} dengan mudah. Pastikan informasi akurat untuk menarik minat pembeli.`}
+                <p className="text-xs md:text-base text-gray-500 mt-1 max-w-2xl mx-auto leading-relaxed">
+                    {description || `Kelola data produk ${title} dengan mudah.`}
                 </p>
             </div>
          </div>
       </div>
 
       {/* SEARCH & ADD BUTTON */}
-      <div className="max-w-7xl mx-auto px-4 mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-white/50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 mb-6 md:mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-3 bg-white/60 backdrop-blur-sm p-3 md:p-4 rounded-xl border border-white/50 shadow-sm">
                 
-                <div className="flex items-center gap-2 text-gray-600 font-semibold bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100">
+                <div className="flex items-center gap-2 text-gray-600 font-semibold bg-white px-3 py-2 rounded-lg shadow-sm border border-gray-100 w-full md:w-auto text-xs md:text-sm">
                     <FaBoxOpen className="text-green-500"/>
-                    Total Produk: <span className="text-gray-900">{products.length}</span>
+                    Total: <span className="text-gray-900 font-bold">{products.length} Produk</span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                     <div className="relative w-full sm:w-72">
                         <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input 
@@ -116,41 +111,41 @@ export default function AdminProductManager({ title, categoryId, description }) 
                             placeholder={`Cari produk ${title}...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none shadow-sm transition"
+                            className="w-full pl-10 pr-4 py-2 md:py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none shadow-sm transition text-xs md:text-sm"
                         />
                     </div>
                     
                     <button 
                         onClick={handleAddClick}
-                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                        className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:py-2.5 rounded-lg font-bold shadow-md flex items-center justify-center gap-2 text-xs md:text-sm transition"
                     >
-                        <FaPlus /> Tambah Produk
+                        <FaPlus /> Tambah
                     </button>
                 </div>
             </div>
       </div>
 
-      {/* PRODUCT GRID */}
+      {/* PRODUCT GRID ADMIN - 2 KOLOM DI MOBILE */}
       <div className="max-w-7xl mx-auto px-4">
         {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                 {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
             </div>
         ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-20 bg-white/80 rounded-2xl border-2 border-dashed border-gray-300">
-                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                     <FaSearch className="text-3xl text-gray-300" />
+            <div className="text-center py-16 bg-white/80 rounded-2xl border-2 border-dashed border-gray-300">
+                <div className="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
+                     <FaSearch className="text-2xl text-gray-300" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-700">Tidak ada produk ditemukan</h3>
-                <p className="text-gray-500 text-sm mb-4">Coba kata kunci lain atau tambahkan produk baru.</p>
+                <h3 className="text-sm font-bold text-gray-700">Tidak ada produk</h3>
+                <p className="text-gray-500 text-xs mb-3">Tambahkan produk baru sekarang.</p>
                 {!searchTerm && (
-                    <button onClick={handleAddClick} className="text-green-600 font-bold hover:underline">Tambah Produk Pertama</button>
+                    <button onClick={handleAddClick} className="text-green-600 font-bold hover:underline text-xs">Tambah Produk</button>
                 )}
             </div>
         ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
                 {filteredProducts.map((item) => (
-                    <div key={item.id} className="transform transition duration-300 hover:-translate-y-1">
+                    <div key={item.id} className="hover:-translate-y-1 transition duration-300">
                         <ProductCard 
                             product={item}
                             isAdmin={true}
