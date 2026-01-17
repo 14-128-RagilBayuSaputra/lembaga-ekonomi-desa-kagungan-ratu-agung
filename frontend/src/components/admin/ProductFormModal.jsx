@@ -6,14 +6,15 @@ import api from "../../api/axios";
 export default function ProductFormModal({ isOpen, onClose, editData, onSuccess, categoryContext }) {
   const [loading, setLoading] = useState(false);
   
-  // --- STATE MANAGEMENT ---
+  // --- STATE GAMBAR ---
   const [newImages, setNewImages] = useState([]);     // File Asli (Upload Baru)
-  const [newPreviews, setNewPreviews] = useState([]); // URL Preview (Upload Baru)
+  const [newPreviews, setNewPreviews] = useState([]); // Preview Upload Baru
   
   const [existingImages, setExistingImages] = useState([]); // Gambar Lama dari DB
-  const [deletedIds, setDeletedIds] = useState([]);         // ID Gambar Lama yang mau DIHAPUS
+  const [deletedIds, setDeletedIds] = useState([]);         // Antrian ID Gambar Lama yang akan DIHAPUS
 
-  // Config Endpoint
+  // === PENTING: SESUAIKAN DENGAN ROUTE ADMIN DI APP.JS ===
+  // Backend Anda: app.use("/api/admin/products", adminProductsRoutes);
   const API_ENDPOINT = "/admin/products";
 
   const initialForm = {
@@ -42,14 +43,17 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
             is_active: editData.is_active !== undefined ? editData.is_active : true,
         });
         
-        // Mode Edit: Pisahkan gambar lama
-        // Kita butuh ID untuk menghapus, jadi simpan object {id, image_url}
+        // Setup Gambar Lama
         let oldImgs = [];
+        // Masukkan gambar gallery
         if (editData.images && Array.isArray(editData.images)) {
-            oldImgs = [...editData.images]; // Salin array gallery
+            oldImgs = [...editData.images];
         }
-        // Jika ada cover image terpisah dan belum ada di gallery, bisa ditangani khusus
-        // Tapi biasanya sistem Anda sudah memasukkannya ke gallery atau cover image diganti lewat upload baru
+        // Masukkan cover image jika belum ada di gallery (opsional, tergantung struktur DB Anda)
+        if (editData.image_url && !oldImgs.find(img => img.image_url === editData.image_url)) {
+             // Mock object untuk cover image jika tidak ada di tabel images
+             oldImgs.unshift({ id: 'cover', image_url: editData.image_url }); 
+        }
         
         setExistingImages(oldImgs);
         setDeletedIds([]); // Reset antrian hapus
@@ -87,11 +91,16 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
     setNewImages((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // --- 3. HANDLER GAMBAR LAMA (DELETE DATABASE) ---
+  // --- 3. HANDLER GAMBAR LAMA (HAPUS) ---
   const removeExistingImage = (id) => {
-      // 1. Masukkan ID ke antrian hapus
-      setDeletedIds((prev) => [...prev, id]);
-      // 2. Hilangkan dari tampilan modal
+      // Jika id 'cover', itu hanya string URL di tabel products, tidak bisa dihapus via endpoint image/:id
+      // Namun jika dari tabel product_images, kita masukkan ke antrian
+      if (id !== 'cover') {
+          setDeletedIds((prev) => [...prev, id]);
+      } else {
+          toast("Foto sampul utama akan terganti otomatis saat Anda upload foto baru.", { icon: "ℹ️" });
+      }
+      // Hilangkan dari tampilan
       setExistingImages((prev) => prev.filter((img) => img.id !== id));
   };
 
@@ -101,34 +110,33 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
     setLoading(true);
 
     try {
-      // A. EKSEKUSI PENGHAPUSAN FOTO LAMA (Jika ada yang dihapus)
+      // A. EKSEKUSI PENGHAPUSAN FOTO LAMA (Sesuai Backend: DELETE /image/:id)
       if (editData && deletedIds.length > 0) {
-          // Kita loop request delete ke backend untuk setiap ID yang dibuang
           await Promise.all(deletedIds.map(id => api.delete(`${API_ENDPOINT}/image/${id}`)));
       }
 
-      // B. PERSIAPAN DATA BARU
+      // B. PERSIAPAN DATA FORM
       const submitData = new FormData();
-      
-      // Data Teks
       Object.keys(formData).forEach(key => {
         submitData.append(key, formData[key]);
       });
 
-      // Data Gambar Baru
+      // C. MASUKKAN GAMBAR BARU (Sesuai Backend: upload.array("images"))
       if (newImages.length > 0) {
           newImages.forEach((file) => {
               submitData.append("images", file); 
           });
       }
 
-      // C. KIRIM REQUEST UTAMA (PUT/POST)
+      // D. KIRIM REQUEST (Sesuai Backend: PUT /:id atau POST /)
       if (editData) {
+        // EDIT: PUT /api/admin/products/:id
         await api.put(`${API_ENDPOINT}/${editData.id}`, submitData, {
             headers: { "Content-Type": "multipart/form-data" }
         });
-        toast.success("Produk diperbarui!");
+        toast.success("Produk berhasil diperbarui!");
       } else {
+        // TAMBAH: POST /api/admin/products
         await api.post(API_ENDPOINT, submitData, {
             headers: { "Content-Type": "multipart/form-data" }
         });
@@ -139,8 +147,12 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
       onClose();   
     } catch (error) {
       console.error("Error submit:", error);
-      if(error.response?.status === 404) toast.error("Endpoint Salah (404).");
-      else toast.error(error.response?.data?.message || "Gagal menyimpan produk.");
+      // Debugging Error Message
+      if(error.response?.status === 404) {
+          toast.error(`Endpoint Salah: ${API_ENDPOINT}/${editData?.id || ''} tidak ditemukan.`);
+      } else {
+          toast.error(error.response?.data?.message || "Gagal menyimpan produk.");
+      }
     } finally {
       setLoading(false);
     }
@@ -165,12 +177,12 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
         {/* FORM */}
         <form onSubmit={handleSubmit} className="p-5 space-y-4 overflow-y-auto custom-scrollbar">
           
-          {/* AREA UPLOAD & PREVIEW */}
+          {/* AREA FOTO */}
           <div className="space-y-2">
              <label className="text-[10px] font-bold text-gray-400 uppercase">Foto Produk</label>
              <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
                  
-                 {/* 1. TOMBOL UPLOAD */}
+                 {/* TOMBOL UPLOAD */}
                  <div className="w-20 h-20 bg-gray-50 rounded-lg border-2 border-dashed border-green-300 flex items-center justify-center relative shrink-0 hover:bg-green-50 transition cursor-pointer group">
                     <div className="text-center">
                         <FaCloudUploadAlt className="text-green-400 text-xl mx-auto group-hover:scale-110 transition"/>
@@ -179,42 +191,34 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
                     <input type="file" accept="image/*" multiple onChange={handleImageChange} className="absolute inset-0 opacity-0 cursor-pointer" />
                  </div>
 
-                 {/* 2. PREVIEW GAMBAR LAMA (Dari Database) */}
-                 {existingImages.map((img) => (
-                     <div key={img.id} className="w-20 h-20 rounded-lg border border-blue-200 relative shrink-0 overflow-hidden group">
+                 {/* PREVIEW LAMA */}
+                 {existingImages.map((img, idx) => (
+                     <div key={`old-${idx}`} className="w-20 h-20 rounded-lg border border-blue-200 relative shrink-0 overflow-hidden group">
                          <img src={img.image_url} alt="Old" className="w-full h-full object-cover" />
-                         {/* Badge 'Lama' */}
                          <span className="absolute bottom-0 left-0 right-0 bg-blue-600/80 text-white text-[8px] text-center font-bold">Tersimpan</span>
-                         
-                         {/* Tombol Hapus (Queue Delete) */}
-                         <button type="button" onClick={() => removeExistingImage(img.id)} className="absolute top-0 right-0 bg-red-600 text-white p-1 rounded-bl-lg opacity-0 group-hover:opacity-100 transition shadow-md">
+                         <button type="button" onClick={() => removeExistingImage(img.id)} className="absolute top-0 right-0 bg-red-600 text-white p-1 rounded-bl-lg opacity-0 group-hover:opacity-100 transition">
                             <FaTrash size={10} />
                          </button>
                      </div>
                  ))}
 
-                 {/* 3. PREVIEW GAMBAR BARU (Uploadan User) */}
+                 {/* PREVIEW BARU */}
                  {newPreviews.map((src, idx) => (
                      <div key={`new-${idx}`} className="w-20 h-20 rounded-lg border border-green-200 relative shrink-0 overflow-hidden group">
                          <img src={src} alt="New" className="w-full h-full object-cover" />
-                         {/* Badge 'Baru' */}
                          <span className="absolute bottom-0 left-0 right-0 bg-green-600/80 text-white text-[8px] text-center font-bold">Baru</span>
-
-                         {/* Tombol Hapus (Cancel Upload) */}
-                         <button type="button" onClick={() => removeNewImage(idx)} className="absolute top-0 right-0 bg-red-600 text-white p-1 rounded-bl-lg opacity-0 group-hover:opacity-100 transition shadow-md">
+                         <button type="button" onClick={() => removeNewImage(idx)} className="absolute top-0 right-0 bg-red-600 text-white p-1 rounded-bl-lg opacity-0 group-hover:opacity-100 transition">
                             <FaTimes size={10} />
                          </button>
                      </div>
                  ))}
              </div>
-             {deletedIds.length > 0 && (
-                 <p className="text-[10px] text-red-500 italic">* {deletedIds.length} foto lama akan dihapus permanen saat tombol Simpan ditekan.</p>
-             )}
+             {deletedIds.length > 0 && <p className="text-[10px] text-red-500 italic">* {deletedIds.length} foto lama akan dihapus permanen.</p>}
           </div>
 
           <hr className="border-gray-100"/>
 
-          {/* INPUT FIELDS (Tetap Sama) */}
+          {/* INPUT FORM (Sama seperti sebelumnya) */}
           <div className="space-y-2">
              <div className="flex justify-between items-center bg-gray-50 px-3 py-1.5 rounded border border-gray-200">
                 <span className="text-xs font-bold text-gray-600">Status</span>
@@ -233,7 +237,6 @@ export default function ProductFormModal({ isOpen, onClose, editData, onSuccess,
 
           <textarea name="description" rows="2" value={formData.description} onChange={handleChange} className="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none resize-none" placeholder="Deskripsi produk..."></textarea>
 
-          {/* SOCIAL LINKS */}
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 space-y-2">
              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Sosial Media & Lokasi</p>
              <div className="grid grid-cols-2 gap-2">

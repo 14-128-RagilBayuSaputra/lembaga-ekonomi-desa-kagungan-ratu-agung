@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaPlus, FaBoxOpen, FaSearch, FaLeaf, FaFilter } from "react-icons/fa";
+import { FaPlus, FaBoxOpen, FaSearch, FaLeaf } from "react-icons/fa";
 import Swal from "sweetalert2"; 
 import api from "../../api/axios";
 import toast from "react-hot-toast";
@@ -20,18 +20,21 @@ export default function AdminProductManager({ title, categoryId, description }) 
   const [editData, setEditData] = useState(null);
   const [previewProduct, setPreviewProduct] = useState(null); 
 
-  // --- LOGIC FETCH (SAMA SEPERTI SEBELUMNYA) ---
+  // --- LOGIC FETCH ---
   const fetchProducts = () => {
     setLoading(true);
-    api.get("/products") 
+    // PERBAIKAN 1: Gunakan endpoint ADMIN agar konsisten
+    api.get("/admin/products") 
       .then((res) => {
         const allProducts = res.data.data || [];
+        // Filter berdasarkan kategori halaman saat ini (BUMDes/UMKM/Koperasi)
         const filtered = allProducts.filter(p => 
             p.category_id === categoryId || p.category?.id === categoryId
         );
         setProducts(filtered);
       })
       .catch((err) => {
+        console.error(err);
         toast.error("Gagal memuat data");
       })
       .finally(() => setLoading(false));
@@ -46,6 +49,7 @@ export default function AdminProductManager({ title, categoryId, description }) 
   const handleAddClick = () => { setEditData(null); setIsModalOpen(true); };
   const handleEditClick = (product) => { setEditData(product); setIsModalOpen(true); };
   
+  // --- LOGIC DELETE ---
   const handleDeleteClick = async (id) => {
     const result = await Swal.fire({
         title: 'Hapus Produk?',
@@ -59,17 +63,19 @@ export default function AdminProductManager({ title, categoryId, description }) 
 
     if (result.isConfirmed) {
         try { 
-            await api.delete(`/products/${id}`); 
+            // PERBAIKAN 2: Tambahkan '/admin' di URL delete
+            await api.delete(`/admin/products/${id}`); 
+            
             Swal.fire('Terhapus!', 'Produk telah dihapus.', 'success');
-            fetchProducts(); 
+            fetchProducts(); // Refresh data
         } catch (e) { 
-            Swal.fire('Gagal', 'Terjadi kesalahan.', 'error');
+            console.error(e);
+            Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus.', 'error');
         }
     }
   };
 
   return (
-    // UBAH 1: Background Gradient Halus (Putih ke Hijau Sangat Muda)
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50/50 pb-20 font-sans text-gray-800">
       
       <NavbarAdmin /> 
@@ -77,7 +83,6 @@ export default function AdminProductManager({ title, categoryId, description }) 
       <div className="relative mb-8"> 
          <HeroSlider isAdmin={true} />
          
-         {/* UBAH 2: Bagian Deskripsi dibuat Card Floating yang Elegan */}
          <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
             <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-green-500 text-center">
                 <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-full mb-3">
@@ -114,7 +119,7 @@ export default function AdminProductManager({ title, categoryId, description }) 
                             className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none shadow-sm transition"
                         />
                     </div>
-                    {/* Tombol dengan Gradient */}
+                    
                     <button 
                         onClick={handleAddClick}
                         className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
@@ -145,7 +150,6 @@ export default function AdminProductManager({ title, categoryId, description }) 
         ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredProducts.map((item) => (
-                    // UBAH 3: Card dibungkus div agar bisa dikasih style tambahan jika perlu
                     <div key={item.id} className="transform transition duration-300 hover:-translate-y-1">
                         <ProductCard 
                             product={item}
