@@ -1,219 +1,256 @@
-import { useEffect, useState } from "react";
-import { FaPlus, FaTimes } from "react-icons/fa";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { FaSave, FaArrowLeft, FaImage } from "react-icons/fa";
 import api from "../../api/axios";
+import NavbarAdmin from "../../components/admin/NavbarAdmin"; // Pakai Navbar Admin
 
-// Components Reused
-import HeroSlider from "../../components/common/HeroSlider";
-import ProductCard from "../../components/ui/ProductCard";
-import AdminNavbar from "../../components/admin/AdminNavbar"; // Asumsi Anda punya ini, atau pakai Navbar biasa
-
-export default function ProductsAdmin({ title, category }) {
-  // State Data
-  const [products, setProducts] = useState([]);
+export default function EditProduct() {
+  const { id } = useParams(); // Ambil ID dari URL
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   
-  // State Modal Form
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentId, setCurrentId] = useState(null);
-
-  // Form State
+  // State Form
   const [form, setForm] = useState({
     product_name: "",
     business_name: "",
+    category_id: "1",
     price: "",
     description: "",
-    image_url: "", // Asumsi handle upload terpisah atau input link dulu
+    whatsapp_url: "",
+    instagram_url: "",
     maps_url: "",
-    whatsapp_url: ""
+    image_url: "" // URL gambar lama
   });
 
-  // --- FETCH DATA ---
-  const fetchProducts = () => {
-    api.get("/admin/products") // Pastikan endpoint ini return semua produk
-      .then((res) => {
-        // Filter sesuai kategori halaman (BUMDes/UMKM/Koperasi)
-        const filtered = res.data.data.filter(
-          (p) => p.category?.name?.toLowerCase() === category.toLowerCase()
-        );
-        setProducts(filtered);
-      })
-      .catch(console.error);
-  };
+  // State untuk File Gambar Baru (Jika diganti)
+  const [imageFile, setImageFile] = useState(null);
+  const [preview, setPreview] = useState(null);
 
+  // 1. Ambil Data Produk Lama saat halaman dibuka
   useEffect(() => {
-    fetchProducts();
-  }, [category]);
+    api.get(`/products/${id}`)
+      .then((res) => {
+        const data = res.data.data;
+        setForm({
+            product_name: data.product_name,
+            business_name: data.business_name,
+            category_id: data.category_id,
+            price: data.price,
+            description: data.description,
+            whatsapp_url: data.whatsapp_url || "",
+            instagram_url: data.instagram_url || "",
+            maps_url: data.maps_url || "",
+            image_url: data.image_url
+        });
+        setPreview(data.image_url); // Set preview pakai gambar lama dulu
+      })
+      .catch((err) => {
+        alert("Gagal mengambil data produk");
+        navigate("/admin/dashboard");
+      });
+  }, [id, navigate]);
 
-  // --- HANDLERS SLIDER ---
-  const handleAddSlider = () => {
-    alert("Fitur Tambah Slider: Implementasikan modal upload slider disini.");
-    // Logika: Buka modal upload gambar slider -> POST /sliders
+  // Handle Input Teks
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleDeleteSlider = (id) => {
-    if(!confirm("Hapus slider ini?")) return;
-    api.delete(`/sliders/${id}`)
-       .then(() => alert("Slider dihapus!")) // Refresh slider logic needed inside HeroSlider component typically
-       .catch(() => alert("Gagal hapus"));
-  };
-
-  // --- HANDLERS PRODUCT ---
-  const openAddModal = () => {
-    setForm({ product_name: "", business_name: "", price: "", description: "", image_url: "", maps_url: "", whatsapp_url: "" });
-    setIsEditing(false);
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (product) => {
-    setForm({
-        product_name: product.product_name,
-        business_name: product.business_name,
-        price: product.price || "",
-        description: product.description || "",
-        image_url: product.image_url || "",
-        maps_url: product.maps_url || "",
-        whatsapp_url: product.whatsapp_url || ""
-    });
-    setCurrentId(product.id);
-    setIsEditing(true);
-    setIsModalOpen(true);
-  };
-
-  const handleDeleteProduct = async (id) => {
-    if (!confirm("Yakin ingin menghapus produk ini?")) return;
-    try {
-        await api.delete(`/admin/products/${id}`); // Sesuaikan endpoint delete
-        fetchProducts();
-    } catch (err) {
-        alert("Gagal menghapus produk");
+  // Handle Input Gambar
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setImageFile(file);
+      setPreview(URL.createObjectURL(file));
     }
   };
 
-  const handleSaveProduct = async (e) => {
+  // Handle Submit (Simpan Perubahan)
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+
     try {
-        const payload = { ...form, category, price: Number(form.price) };
-        
-        if (isEditing) {
-            await api.put(`/admin/products/${currentId}`, payload);
-        } else {
-            await api.post("/admin/products", payload);
-        }
-        
-        setIsModalOpen(false);
-        fetchProducts();
-        alert(isEditing ? "Produk diperbarui!" : "Produk berhasil ditambah!");
+      // Gunakan FormData karena ada upload file
+      const formData = new FormData();
+      formData.append("product_name", form.product_name);
+      formData.append("business_name", form.business_name);
+      formData.append("category_id", form.category_id);
+      formData.append("price", form.price);
+      formData.append("description", form.description);
+      formData.append("whatsapp_url", form.whatsapp_url);
+      formData.append("instagram_url", form.instagram_url);
+      formData.append("maps_url", form.maps_url);
+
+      // Hanya kirim gambar jika user memilih file baru
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      // Kirim ke Backend (PUT)
+      await api.put(`/products/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      alert("Produk berhasil diperbarui!");
+      navigate("/admin/dashboard");
     } catch (error) {
-        console.error(error);
-        alert("Gagal menyimpan data.");
+      console.error(error);
+      alert("Gagal memperbarui produk. Cek koneksi atau data.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20">
-      {/* Jika pakai layout khusus admin, bungkus di sini */}
-      <AdminNavbar /> 
+    <div className="bg-gray-50 min-h-screen pb-20">
+      <NavbarAdmin /> {/* Pastikan Navbar Admin Muncul */}
 
-      {/* 1. HERO SECTION (ADMIN MODE) */}
-      <div className="relative">
-        <HeroSlider 
-            isAdmin={true} 
-            onAddClick={handleAddSlider} 
-            onDeleteClick={handleDeleteSlider} 
-        />
-        
-        {/* Judul Halaman Overlay */}
-        <div className="absolute -bottom-10 left-0 right-0 px-6">
-            <div className="bg-white rounded-xl shadow-lg p-6 max-w-4xl mx-auto flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Kelola {title}</h1>
-                    <p className="text-gray-500 text-sm">Anda login sebagai Administrator</p>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8">
+          
+          <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+            <h1 className="text-2xl font-bold text-gray-800">Edit Produk</h1>
+            <button onClick={() => navigate("/admin/dashboard")} className="text-gray-500 hover:text-gray-800 flex items-center gap-2 text-sm font-bold">
+                <FaArrowLeft /> Batal
+            </button>
+          </div>
+
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* KOLOM KIRI: Upload Gambar */}
+            <div className="space-y-4">
+                <label className="block text-sm font-bold text-gray-700">Foto Produk</label>
+                
+                <div className="relative border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition h-64">
+                    {preview ? (
+                        <img src={preview} alt="Preview" className="w-full h-full object-contain rounded-lg" />
+                    ) : (
+                        <div className="text-center text-gray-400">
+                            <FaImage className="text-4xl mx-auto mb-2" />
+                            <p className="text-xs">Belum ada gambar</p>
+                        </div>
+                    )}
+                    
+                    <input 
+                        type="file" 
+                        onChange={handleImageChange}
+                        accept="image/*"
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
                 </div>
+                <p className="text-xs text-gray-500 text-center">Klik gambar di atas untuk mengganti foto.</p>
+            </div>
+
+            {/* KOLOM KANAN: Input Data */}
+            <div className="space-y-4">
+                
+                {/* Nama Produk */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Produk</label>
+                    <input 
+                        name="product_name" 
+                        value={form.product_name} 
+                        onChange={handleChange} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                        required 
+                    />
+                </div>
+
+                {/* Nama Usaha */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Nama Usaha / Penjual</label>
+                    <input 
+                        name="business_name" 
+                        value={form.business_name} 
+                        onChange={handleChange} 
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                        required 
+                    />
+                </div>
+
+                {/* Kategori & Harga */}
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Kategori</label>
+                        <select 
+                            name="category_id" 
+                            value={form.category_id} 
+                            onChange={handleChange}
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-white"
+                        >
+                            <option value="1">BUMDes</option>
+                            <option value="2">UMKM</option>
+                            <option value="3">Koperasi</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Harga (Rp)</label>
+                        <input 
+                            type="number" 
+                            name="price" 
+                            value={form.price} 
+                            onChange={handleChange} 
+                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                            required 
+                        />
+                    </div>
+                </div>
+
+                {/* Deskripsi */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deskripsi</label>
+                    <textarea 
+                        name="description" 
+                        value={form.description} 
+                        onChange={handleChange} 
+                        rows="3"
+                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
+                    ></textarea>
+                </div>
+            </div>
+
+            {/* BARIS BAWAH: Link Sosmed & Maps (Full Width) */}
+            <div className="md:col-span-2 space-y-4 border-t border-gray-100 pt-4">
+                <h3 className="text-sm font-bold text-gray-800">Kontak & Lokasi</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input 
+                        name="whatsapp_url" 
+                        value={form.whatsapp_url} 
+                        onChange={handleChange} 
+                        placeholder="Link WhatsApp (https://wa.me/...)" 
+                        className="p-3 border rounded-lg text-sm"
+                    />
+                    <input 
+                        name="instagram_url" 
+                        value={form.instagram_url} 
+                        onChange={handleChange} 
+                        placeholder="Link Instagram" 
+                        className="p-3 border rounded-lg text-sm"
+                    />
+                    <input 
+                        name="maps_url" 
+                        value={form.maps_url} 
+                        onChange={handleChange} 
+                        placeholder="Link Google Maps" 
+                        className="p-3 border rounded-lg text-sm"
+                    />
+                </div>
+            </div>
+
+            {/* TOMBOL SIMPAN */}
+            <div className="md:col-span-2 mt-4">
                 <button 
-                    onClick={openAddModal}
-                    className="bg-desa-primary hover:bg-desa-dark text-white px-6 py-3 rounded-lg font-bold shadow-lg flex items-center gap-2 transition"
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full bg-green-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-green-700 transition flex justify-center items-center gap-2 text-lg"
                 >
-                    <FaPlus /> Tambah Produk
+                    {loading ? "Menyimpan..." : <><FaSave /> Simpan Perubahan</>}
                 </button>
             </div>
+
+          </form>
         </div>
       </div>
-
-      {/* 2. LIST PRODUK (ADMIN MODE) */}
-      <div className="max-w-7xl mx-auto px-6 mt-20">
-        {products.length === 0 ? (
-            <div className="text-center py-20 text-gray-400">
-                <p>Belum ada produk di kategori ini.</p>
-            </div>
-        ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                {products.map((p) => (
-                    <ProductCard 
-                        key={p.id} 
-                        product={p}
-                        isAdmin={true} // Aktifkan tombol edit/hapus
-                        onEdit={openEditModal}
-                        onDelete={handleDeleteProduct}
-                        onClick={() => {}} // Admin klik card tidak perlu buka detail
-                    />
-                ))}
-            </div>
-        )}
-      </div>
-
-      {/* 3. MODAL FORM ADD/EDIT */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-                <div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
-                    <h3 className="font-bold text-lg text-gray-800">
-                        {isEditing ? "Edit Produk" : "Tambah Produk Baru"}
-                    </h3>
-                    <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-red-500">
-                        <FaTimes size={20} />
-                    </button>
-                </div>
-                
-                <form onSubmit={handleSaveProduct} className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nama Produk</label>
-                        <input type="text" className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-desa-primary outline-none" 
-                            value={form.product_name} onChange={e => setForm({...form, product_name: e.target.value})} required />
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Usaha</label>
-                            <input type="text" className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-desa-primary outline-none" 
-                                value={form.business_name} onChange={e => setForm({...form, business_name: e.target.value})} required />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Harga (Rp)</label>
-                            <input type="number" className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-desa-primary outline-none" 
-                                value={form.price} onChange={e => setForm({...form, price: e.target.value})} />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">URL Gambar</label>
-                        <input type="text" className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-desa-primary outline-none" 
-                            placeholder="https://..." value={form.image_url} onChange={e => setForm({...form, image_url: e.target.value})} />
-                        <p className="text-xs text-gray-400 mt-1">*Fitur upload gambar sebaiknya menggunakan input type file terpisah.</p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-                        <textarea className="w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-desa-primary outline-none" rows="3"
-                            value={form.description} onChange={e => setForm({...form, description: e.target.value})}></textarea>
-                    </div>
-
-                    <button type="submit" className="w-full bg-desa-primary text-white font-bold py-3 rounded-lg hover:bg-desa-dark transition shadow-lg">
-                        {isEditing ? "Simpan Perubahan" : "Terbitkan Produk"}
-                    </button>
-                </form>
-            </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -2,8 +2,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 /* USER */
 import Home from "../pages/user/Home";
-
-/* CATEGORY */
 import Bumdes from "../pages/category/BUMDes";
 import Umkm from "../pages/category/UMKM";
 import Koperasi from "../pages/category/Koperasi";
@@ -13,13 +11,15 @@ import Login from "../pages/admin/Login";
 import ResetAdmin from "../pages/admin/ResetAdmin";
 
 /* ADMIN PAGES */
+import AdminHome from "../pages/admin/AdminHome"; 
 import BUMDesAdmin from "../pages/admin/BUMDesAdmin";
 import UMKMAdmin from "../pages/admin/UMKMAdmin";
 import KoperasiAdmin from "../pages/admin/KoperasiAdmin";
-import AdminHome from "../pages/admin/AdminHome"; 
 
-/* PENTING: IMPORT PRIVATE ROUTE */
-// Pastikan file ini ada. Jika belum, lihat kode di bawah.
+/* --- HAPUS IMPORT INI KARENA KITA PAKAI MODAL --- */
+// import AddProduct from "../pages/admin/AddProduct";  <-- HAPUS
+// import EditProduct from "../pages/admin/EditProduct"; <-- HAPUS
+
 import PrivateRoute from "../components/auth/PrivateRoute"; 
 
 export default function AppRoutes() {
@@ -37,47 +37,17 @@ export default function AppRoutes() {
         <Route path="/admin/reset" element={<ResetAdmin />} />
 
         {/* === ADMIN PAGES === */}
-        {/* CATATAN PENTING:
-            Kita MEMBUNGKUS dengan <PrivateRoute> agar aman.
-            Kita TIDAK MEMBUNGKUS dengan <AdminLayout> agar tampilan Full Width
-            (Karena AdminNavbar sudah ada di dalam masing-masing halaman).
-        */}
+        <Route path="/admin/dashboard" element={<PrivateRoute><AdminHome /></PrivateRoute>} />
         
-        <Route 
-          path="/admin/dashboard" 
-          element={
-            <PrivateRoute>
-              <AdminHome />
-            </PrivateRoute>
-          } 
-        />
+        {/* --- HAPUS ROUTE INI --- */}
+        {/* <Route path="/admin/add-product" element={<PrivateRoute><AddProduct /></PrivateRoute>} /> */}
+        {/* <Route path="/admin/edit-product/:id" element={<PrivateRoute><EditProduct /></PrivateRoute>} /> */}
 
-        <Route
-          path="/admin/bumdes"
-          element={
-            <PrivateRoute>
-               <BUMDesAdmin />
-            </PrivateRoute>
-          }
-        />
+        {/* Kategori Admin */}
+        <Route path="/admin/bumdes" element={<PrivateRoute><BUMDesAdmin /></PrivateRoute>} />
+        <Route path="/admin/umkm" element={<PrivateRoute><UMKMAdmin /></PrivateRoute>} />
+        <Route path="/admin/koperasi" element={<PrivateRoute><KoperasiAdmin /></PrivateRoute>} />
 
-        <Route
-          path="/admin/umkm"
-          element={
-            <PrivateRoute>
-               <UMKMAdmin />
-            </PrivateRoute>
-          }
-        />
-
-        <Route
-          path="/admin/koperasi"
-          element={
-            <PrivateRoute>
-               <KoperasiAdmin />
-            </PrivateRoute>
-          }
-        />
       </Routes>
     </BrowserRouter>
   );

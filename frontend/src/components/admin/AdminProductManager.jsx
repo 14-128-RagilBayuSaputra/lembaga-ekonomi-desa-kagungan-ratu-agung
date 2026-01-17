@@ -1,28 +1,26 @@
 import { useEffect, useState } from "react";
-import { FaPlus, FaBoxOpen, FaSearch } from "react-icons/fa";
-import Swal from "sweetalert2"; // IMPORT SWEETALERT2
+import { FaPlus, FaBoxOpen, FaSearch, FaLeaf, FaFilter } from "react-icons/fa";
+import Swal from "sweetalert2"; 
 import api from "../../api/axios";
 import toast from "react-hot-toast";
 
-// Import Komponen
-import AdminNavbar from "./AdminNavbar"; 
+import NavbarAdmin from "./NavbarAdmin"; 
 import HeroSlider from "../common/HeroSlider";
 import ProductCard from "../ui/ProductCard";
 import ProductFormModal from "./ProductFormModal";
-import ProductDetailModal from "../ui/ProductDetailModal"; // IMPORT MODAL DETAIL UNTUK PREVIEW
+import ProductDetailModal from "../ui/ProductDetailModal"; 
 import SkeletonCard from "../ui/SkeletonCard"; 
 
-export default function AdminProductManager({ title, categoryId }) {
+export default function AdminProductManager({ title, categoryId, description }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // State Pencarian, Modal, & Preview
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editData, setEditData] = useState(null);
-  const [previewProduct, setPreviewProduct] = useState(null); // STATE UNTUK PREVIEW
+  const [previewProduct, setPreviewProduct] = useState(null); 
 
-  // === 1. FETCH DATA ===
+  // --- LOGIC FETCH (SAMA SEPERTI SEBELUMNYA) ---
   const fetchProducts = () => {
     setLoading(true);
     api.get("/products") 
@@ -41,124 +39,127 @@ export default function AdminProductManager({ title, categoryId }) {
 
   useEffect(() => { fetchProducts(); }, [categoryId]);
 
-  // === 2. FILTER PENCARIAN ===
   const filteredProducts = products.filter((product) =>
     product.product_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  // === 3. HANDLERS ===
   const handleAddClick = () => { setEditData(null); setIsModalOpen(true); };
   const handleEditClick = (product) => { setEditData(product); setIsModalOpen(true); };
   
-  // HANDLER HAPUS DENGAN SWEETALERT2
   const handleDeleteClick = async (id) => {
     const result = await Swal.fire({
-        title: 'Yakin ingin menghapus?',
-        text: "Data produk ini tidak bisa dikembalikan!",
+        title: 'Hapus Produk?',
+        text: "Data tidak bisa dikembalikan!",
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#d33',
         cancelButtonColor: '#3085d6',
-        confirmButtonText: 'Ya, Hapus!',
-        cancelButtonText: 'Batal'
+        confirmButtonText: 'Ya, Hapus!'
     });
 
     if (result.isConfirmed) {
         try { 
-            await api.delete(`/admin/products/${id}`); 
-            // Feedback Sukses
-            Swal.fire(
-                'Terhapus!',
-                'Produk telah dihapus.',
-                'success'
-            );
+            await api.delete(`/products/${id}`); 
+            Swal.fire('Terhapus!', 'Produk telah dihapus.', 'success');
             fetchProducts(); 
         } catch (e) { 
-            Swal.fire('Gagal', 'Terjadi kesalahan saat menghapus.', 'error');
+            Swal.fire('Gagal', 'Terjadi kesalahan.', 'error');
         }
     }
   };
 
-  // === 4. RENDER TAMPILAN ===
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      <AdminNavbar /> 
+    // UBAH 1: Background Gradient Halus (Putih ke Hijau Sangat Muda)
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-green-50/50 pb-20 font-sans text-gray-800">
       
-      {/* Header + Search Bar */}
-      <div className="relative mb-24"> 
+      <NavbarAdmin /> 
+      
+      <div className="relative mb-8"> 
          <HeroSlider isAdmin={true} />
          
-         <div className="absolute -bottom-16 left-0 right-0 px-4 md:px-8 z-20">
-            <div className="bg-white rounded-xl shadow-lg p-6 max-w-6xl mx-auto border border-gray-100">
-                <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="text-center md:text-left">
-                        <h1 className="text-2xl font-bold text-gray-800">Admin {title}</h1>
-                        <p className="text-gray-500 text-sm">{products.length} Produk Terdaftar</p>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-                        {/* SEARCH INPUT */}
-                        <div className="relative w-full sm:w-64">
-                            <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                            <input 
-                                type="text" 
-                                placeholder="Cari nama produk..." 
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 outline-none transition"
-                            />
-                        </div>
-
-                        {/* ADD BUTTON */}
-                        <button 
-                            onClick={handleAddClick}
-                            className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold shadow-md hover:shadow-lg transition flex items-center justify-center gap-2 whitespace-nowrap"
-                        >
-                            <FaPlus /> Tambah Produk
-                        </button>
-                    </div>
+         {/* UBAH 2: Bagian Deskripsi dibuat Card Floating yang Elegan */}
+         <div className="max-w-5xl mx-auto px-4 -mt-10 relative z-10">
+            <div className="bg-white rounded-2xl shadow-xl p-8 border-t-4 border-green-500 text-center">
+                <div className="inline-flex items-center justify-center w-12 h-12 bg-green-100 text-green-600 rounded-full mb-3">
+                    <FaLeaf />
                 </div>
+                <h1 className="text-3xl font-extrabold text-gray-900 mb-2">
+                    Kelola <span className="text-green-600">{title}</span>
+                </h1>
+                <div className="w-16 h-1 bg-green-200 mx-auto mb-4 rounded-full"></div>
+                <p className="text-gray-500 leading-relaxed max-w-2xl mx-auto">
+                    {description || `Kelola data produk ${title} dengan mudah. Pastikan informasi akurat untuk menarik minat pembeli.`}
+                </p>
             </div>
          </div>
       </div>
 
-      {/* CONTENT GRID */}
+      {/* SEARCH & ADD BUTTON */}
+      <div className="max-w-7xl mx-auto px-4 mb-8">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white/60 backdrop-blur-sm p-4 rounded-xl border border-white/50 shadow-sm">
+                
+                <div className="flex items-center gap-2 text-gray-600 font-semibold bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-100">
+                    <FaBoxOpen className="text-green-500"/>
+                    Total Produk: <span className="text-gray-900">{products.length}</span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+                    <div className="relative w-full sm:w-72">
+                        <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input 
+                            type="text" 
+                            placeholder={`Cari produk ${title}...`}
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none shadow-sm transition"
+                        />
+                    </div>
+                    {/* Tombol dengan Gradient */}
+                    <button 
+                        onClick={handleAddClick}
+                        className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all flex items-center justify-center gap-2"
+                    >
+                        <FaPlus /> Tambah Produk
+                    </button>
+                </div>
+            </div>
+      </div>
+
+      {/* PRODUCT GRID */}
       <div className="max-w-7xl mx-auto px-4">
         {loading ? (
-            // SKELETON LOADING
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {[...Array(8)].map((_, i) => <SkeletonCard key={i} />)}
+                {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
             </div>
         ) : filteredProducts.length === 0 ? (
-            // EMPTY STATE
-            <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed border-gray-200">
-                <FaBoxOpen className="mx-auto text-4xl text-gray-300 mb-3"/>
-                <p className="text-gray-500">
-                    {searchTerm ? `Tidak ditemukan produk "${searchTerm}"` : `Belum ada produk di kategori ${title}.`}
-                </p>
+            <div className="text-center py-20 bg-white/80 rounded-2xl border-2 border-dashed border-gray-300">
+                <div className="bg-gray-50 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <FaSearch className="text-3xl text-gray-300" />
+                </div>
+                <h3 className="text-lg font-bold text-gray-700">Tidak ada produk ditemukan</h3>
+                <p className="text-gray-500 text-sm mb-4">Coba kata kunci lain atau tambahkan produk baru.</p>
                 {!searchTerm && (
-                    <button onClick={handleAddClick} className="text-green-600 font-bold hover:underline mt-2">Tambah Sekarang</button>
+                    <button onClick={handleAddClick} className="text-green-600 font-bold hover:underline">Tambah Produk Pertama</button>
                 )}
             </div>
         ) : (
-            // PRODUCT GRID
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {filteredProducts.map((item) => (
-                    <ProductCard 
-                        key={item.id} 
-                        product={item}
-                        isAdmin={true}
-                        onEdit={handleEditClick}
-                        onDelete={handleDeleteClick}
-                        // KLIK CARD -> BUKA PREVIEW
-                        onClick={() => setPreviewProduct(item)} 
-                    />
+                    // UBAH 3: Card dibungkus div agar bisa dikasih style tambahan jika perlu
+                    <div key={item.id} className="transform transition duration-300 hover:-translate-y-1">
+                        <ProductCard 
+                            product={item}
+                            isAdmin={true}
+                            onEdit={handleEditClick}
+                            onDelete={handleDeleteClick}
+                            onClick={() => setPreviewProduct(item)} 
+                        />
+                    </div>
                 ))}
             </div>
         )}
       </div>
 
-      {/* MODAL FORM (Edit/Add) */}
       <ProductFormModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -167,7 +168,6 @@ export default function AdminProductManager({ title, categoryId }) {
         categoryContext={categoryId} 
       />
 
-      {/* MODAL PREVIEW (Read Only) */}
       <ProductDetailModal 
         product={previewProduct} 
         onClose={() => setPreviewProduct(null)} 

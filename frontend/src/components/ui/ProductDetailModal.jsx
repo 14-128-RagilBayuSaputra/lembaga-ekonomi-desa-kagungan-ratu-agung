@@ -1,59 +1,70 @@
 import { useState } from "react";
-import { FaTimes, FaWhatsapp, FaInstagram, FaStore, FaMapMarkerAlt, FaChevronLeft, FaChevronRight, FaExternalLinkAlt } from "react-icons/fa";
+import { FaTimes, FaWhatsapp, FaInstagram, FaFacebook, FaStore, FaChevronLeft, FaChevronRight, FaExternalLinkAlt, FaMapMarkerAlt, FaShoppingBag } from "react-icons/fa";
 
 export default function ProductDetailModal({ product, onClose }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   if (!product) return null;
 
-  // --- 1. SLIDER GAMBAR ---
+  // --- 1. LOGIKA SLIDER GAMBAR ---
   let imageList = [];
+  // Masukkan Cover Image
   if (product.image_url) imageList.push(product.image_url);
+  // Masukkan Gallery Images (Array)
   if (product.images && Array.isArray(product.images)) {
       product.images.forEach(img => {
           const url = typeof img === 'string' ? img : img.image_url;
-          if (url && url !== product.image_url) imageList.push(url);
+          // Hindari duplikat jika cover image ada di dalam gallery juga
+          if (url && !imageList.includes(url)) imageList.push(url);
       });
   }
+  // Fallback jika tidak ada gambar
   if (imageList.length === 0) imageList.push("https://via.placeholder.com/400x300?text=No+Image");
 
   const nextImage = () => setCurrentImageIndex((prev) => (prev === imageList.length - 1 ? 0 : prev + 1));
   const prevImage = () => setCurrentImageIndex((prev) => (prev === 0 ? imageList.length - 1 : prev - 1));
 
-  // --- 2. DATA ---
+  // --- 2. AMBIL DATA LINK ---
   const waUrl = product.whatsapp_url;
   const igUrl = product.instagram_url;
-  
-  // --- 3. MAPS INTERAKTIF (KOORDINAT) ---
-  const getEmbedMapUrl = (originalUrl) => {
-    if (!originalUrl) return null;
-    if (originalUrl.includes("embed") || originalUrl.includes("output=embed")) return originalUrl;
+  const fbUrl = product.facebook_url;
+  const shopeeUrl = product.shopee_url;
 
-    // Coba ambil koordinat
+  // --- 3. FIX MAPS (INTERAKTIF & BISA DIGESER) ---
+  const getInteractiveMapUrl = (originalUrl) => {
+    if (!originalUrl) return null;
+    
+    // Jika user memasukkan link embed bawaan Google, pakai langsung
+    if (originalUrl.includes("embed")) return originalUrl;
+
+    let query = "";
+
+    // Cek Koordinat (contoh: @-4.123,105.123)
     const coordsMatch = originalUrl.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/);
     if (coordsMatch) {
-        const [_, lat, lng] = coordsMatch;
-        return `https://maps.google.com/maps?q=${lat},${lng}&hl=id&z=15&output=embed`;
-    }
-
-    // Fallback nama tempat
-    let searchQuery = encodeURIComponent(product.business_name || "Lokasi");
-    if (originalUrl.includes("/maps/place/")) {
-         try {
-            const splitUrl = originalUrl.split("/maps/place/");
-            if (splitUrl[1]) {
-                searchQuery = splitUrl[1].split("/")[0].replace(/\+/g, " "); 
+        query = `${coordsMatch[1]},${coordsMatch[2]}`;
+    } else {
+        // Cek Nama Tempat dari URL
+        try {
+            if (originalUrl.includes("/place/")) {
+                const parts = originalUrl.split("/place/");
+                if (parts[1]) {
+                   query = parts[1].split("/")[0].replace(/\+/g, " ");
+                }
             }
-         } catch (e) {}
+        } catch (e) {}
+        
+        // Fallback: Gunakan Nama Usaha jika tidak ada koordinat/place
+        if (!query) query = product.business_name || "Lokasi";
     }
-    return `https://maps.google.com/maps?q=${searchQuery}&hl=id&z=15&output=embed`;
+
+    // Gunakan format standar maps.google.com agar INTERAKTIF (Bisa digeser)
+    return `https://maps.google.com/maps?q=${encodeURIComponent(query)}&t=&z=15&ie=UTF8&iwloc=&output=embed`;
   };
 
-  const finalMapUrl = getEmbedMapUrl(product.maps_url);
+  const finalMapUrl = getInteractiveMapUrl(product.maps_url);
 
-  const formatRupiah = (price) => {
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
-  };
+  const formatRupiah = (price) => new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
 
   return (
     <div 
@@ -61,11 +72,10 @@ export default function ProductDetailModal({ product, onClose }) {
         onClick={onClose}
     >
       <div 
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-md md:max-w-3xl overflow-hidden relative animate-fade-in-up flex flex-col md:flex-row max-h-[90vh]"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-[95%] md:max-w-4xl overflow-hidden relative animate-fade-in-up flex flex-col md:flex-row max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         
-        {/* Tombol Close */}
         <button 
             onClick={onClose}
             className="absolute top-3 right-3 z-20 bg-black/60 text-white p-2 rounded-full hover:bg-black/80 transition shadow-lg"
@@ -74,115 +84,117 @@ export default function ProductDetailModal({ product, onClose }) {
         </button>
 
         {/* === KOLOM KIRI: GAMBAR === */}
-        {/* - Mobile: h-64 (Agar pas, tidak terlalu kecil)
-           - Desktop: md:w-1/2 (50% Lebar - Lebih besar dari sebelumnya) 
-           - Background: bg-gray-100 (Terang - agar terlihat menyatu/besar)
-        */}
-        <div className="w-full md:w-1/2 bg-gray-100 relative h-64 md:h-auto group flex-shrink-0 flex items-center justify-center">
-            {/* object-contain: Gambar Utuh (Full) */}
+        <div className="w-full md:w-1/2 bg-gray-100 relative h-72 md:h-auto group flex-shrink-0 flex items-center justify-center">
             <img 
                 src={imageList[currentImageIndex]} 
                 alt="Produk" 
-                className="w-full h-full object-contain mix-blend-multiply" // mix-blend agar background putih di gambar jpg menyatu
+                className="w-full h-full object-contain mix-blend-multiply" 
             />
             
-            <div className="absolute top-3 left-3 bg-white/90 px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-md flex items-center gap-1 z-10">
+            <div className="absolute top-4 left-4 bg-white/90 px-3 py-1 rounded-full text-xs font-bold text-gray-700 shadow-md flex items-center gap-1 z-10">
                 <FaStore className="text-green-600"/> {product.category?.name || "Produk"}
             </div>
 
             {/* Navigasi Slider */}
             {imageList.length > 1 && (
                 <>
-                    <button onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full text-gray-800 shadow-md opacity-0 group-hover:opacity-100 transition"><FaChevronLeft size={14}/></button>
-                    <button onClick={nextImage} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full text-gray-800 shadow-md opacity-0 group-hover:opacity-100 transition"><FaChevronRight size={14}/></button>
-                    <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5">
+                    <button onClick={prevImage} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full text-gray-800 shadow-lg hover:bg-white hover:scale-110 transition"><FaChevronLeft size={16}/></button>
+                    <button onClick={nextImage} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/80 p-2 rounded-full text-gray-800 shadow-lg hover:bg-white hover:scale-110 transition"><FaChevronRight size={16}/></button>
+                    
+                    <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
                         {imageList.map((_, idx) => (
-                            <div key={idx} className={`w-2 h-2 rounded-full transition-all ${currentImageIndex === idx ? "bg-green-600 w-4" : "bg-white/70"}`} />
+                            <div key={idx} className={`h-2 rounded-full transition-all shadow-sm ${currentImageIndex === idx ? "bg-green-600 w-6" : "bg-white w-2"}`} />
                         ))}
                     </div>
                 </>
             )}
         </div>
 
-        {/* === KOLOM KANAN: DETAIL INFO === */}
-        {/* Desktop: md:w-1/2 (Sisanya 50%) */}
+        {/* === KOLOM KANAN: INFO DETAIL === */}
         <div className="w-full md:w-1/2 flex flex-col bg-white overflow-hidden">
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 custom-scrollbar">
                 
-                {/* 1. Judul & Harga */}
+                {/* Judul & Harga */}
                 <div className="border-b border-gray-100 pb-3">
-                    <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-2">
-                        {product.product_name}
-                    </h2>
-                    <div className="flex justify-between items-center">
-                        <span className="text-xl font-bold text-green-600 bg-green-50 px-3 py-1 rounded-lg">
-                            {formatRupiah(product.price)}
-                        </span>
-                    </div>
+                    <h2 className="text-2xl font-bold text-gray-900 leading-tight mb-2">{product.product_name}</h2>
+                    <span className="text-xl font-bold text-green-600 bg-green-50 px-3 py-1 rounded-lg inline-block shadow-sm">
+                        {formatRupiah(product.price)}
+                    </span>
                 </div>
 
-                {/* 2. Info Penjual */}
+                {/* Pemilik */}
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                     <FaStore className="text-gray-400"/>
-                    <span>Dijual oleh: <strong className="text-gray-700">{product.business_name || "Warga Desa"}</strong></span>
+                    <span>Dijual oleh: <strong className="text-gray-800 uppercase tracking-wide">{product.business_name}</strong></span>
                 </div>
 
-                {/* 3. Deskripsi */}
+                {/* Deskripsi */}
                 <div className="text-sm text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1">Deskripsi Produk</h3>
-                    <p className="whitespace-pre-line">
-                        {product.description || "Tidak ada deskripsi detail."}
-                    </p>
+                    <p className="whitespace-pre-line">{product.description || "Tidak ada deskripsi detail."}</p>
                 </div>
 
-                {/* 4. Kontak Media Sosial */}
-                {(waUrl || igUrl) && (
-                    <div className="flex gap-3 pt-2">
+                {/* Tombol Sosmed (Grid Responsif) */}
+                <div className="space-y-2">
+                    {(waUrl || igUrl || fbUrl || shopeeUrl) && (
+                        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Hubungi Penjual</p>
+                    )}
+                    
+                    <div className="grid grid-cols-2 gap-2">
                         {waUrl && (
-                            <a href={waUrl} target="_blank" rel="noreferrer" className="flex-1 bg-green-100 text-green-700 py-2.5 rounded-xl hover:bg-green-200 transition flex justify-center items-center gap-2 font-bold text-sm">
+                            <a href={waUrl} target="_blank" rel="noreferrer" className="bg-green-100 text-green-700 py-2.5 rounded-lg hover:bg-green-200 transition flex justify-center items-center gap-2 font-bold text-sm">
                                 <FaWhatsapp size={18} /> WhatsApp
                             </a>
                         )}
                         {igUrl && (
-                            <a href={igUrl} target="_blank" rel="noreferrer" className="flex-1 bg-pink-100 text-pink-600 py-2.5 rounded-xl hover:bg-pink-200 transition flex justify-center items-center gap-2 font-bold text-sm">
+                            <a href={igUrl} target="_blank" rel="noreferrer" className="bg-pink-100 text-pink-600 py-2.5 rounded-lg hover:bg-pink-200 transition flex justify-center items-center gap-2 font-bold text-sm">
                                 <FaInstagram size={18} /> Instagram
                             </a>
                         )}
+                        {/* LOGIKA TOMBOL FACEBOOK */}
+                        {fbUrl && (
+                            <a href={fbUrl} target="_blank" rel="noreferrer" className="bg-blue-100 text-blue-700 py-2.5 rounded-lg hover:bg-blue-200 transition flex justify-center items-center gap-2 font-bold text-sm">
+                                <FaFacebook size={18} /> Facebook
+                            </a>
+                        )}
+                        {shopeeUrl && (
+                            <a href={shopeeUrl} target="_blank" rel="noreferrer" className="bg-orange-100 text-orange-600 py-2.5 rounded-lg hover:bg-orange-200 transition flex justify-center items-center gap-2 font-bold text-sm">
+                                <FaShoppingBag size={18} /> Shopee
+                            </a>
+                        )}
                     </div>
-                )}
+                </div>
 
-                {/* 5. MAPS (Interaktif & Bisa Digeser) */}
+                {/* MAPS (INTERAKTIF) */}
                 {finalMapUrl && (
-                    <div className="pt-2">
+                    <div className="mt-2">
                         <div className="flex items-center gap-2 mb-2">
-                            <FaMapMarkerAlt className="text-red-500" />
-                            <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wide">Lokasi Usaha</h3>
+                            <FaMapMarkerAlt className="text-red-500"/>
+                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Lokasi Usaha</span>
                         </div>
-                        
-                        <div className="w-full h-56 bg-gray-200 rounded-xl overflow-hidden border border-gray-200 relative shadow-inner">
+                        <div className="h-56 bg-gray-200 rounded-xl overflow-hidden border border-gray-200 relative shadow-inner">
                             <iframe 
                                 src={finalMapUrl}
                                 width="100%" 
                                 height="100%" 
-                                style={{ border: 0, pointerEvents: 'auto' }} 
-                                allowFullScreen
-                                loading="lazy"
+                                style={{ border: 0 }} 
+                                allowFullScreen 
+                                loading="lazy" 
                                 referrerPolicy="no-referrer-when-downgrade"
                                 title="Lokasi Produk"
                             ></iframe>
                             
                              <a 
-                                href={product.maps_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="absolute bottom-2 right-2 bg-white text-blue-600 text-xs font-bold px-3 py-1.5 rounded shadow hover:bg-gray-50 transition flex items-center gap-1 opacity-90 hover:opacity-100"
+                                href={product.maps_url} 
+                                target="_blank" 
+                                rel="noreferrer" 
+                                className="absolute bottom-2 right-2 bg-white text-blue-600 text-[10px] font-bold px-3 py-1.5 rounded-lg shadow-md hover:bg-gray-50 flex items-center gap-1 transition opacity-90 hover:opacity-100"
                             >
                                 <FaExternalLinkAlt size={10}/> Buka App
                             </a>
                         </div>
                     </div>
                 )}
+
             </div>
         </div>
       </div>

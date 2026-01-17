@@ -97,3 +97,4 @@ export default function ProductCardAdmin({ product, onDelete, onUpdated }) {
     </>
   );
 }
+  

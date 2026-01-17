@@ -1,50 +1,67 @@
-// ... import lainnya
-import { FaMapMarkerAlt, FaEdit, FaTrash, FaEyeSlash } from "react-icons/fa";
+import { FaStore, FaEdit, FaTrash } from "react-icons/fa";
 
 export default function ProductCard({ product, onClick, isAdmin, onEdit, onDelete }) {
-  // Cek status aktif (asumsi backend mengirim field is_active)
-  const isActive = product.is_active !== false; // Default true jika field tidak ada
+  const formatRupiah = (price) => {
+    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 }).format(price);
+  };
 
   return (
-    <div
-      onClick={!isAdmin ? onClick : undefined}
-      // Jika tidak aktif & admin, beri efek grayscale dan opacity
-      className={`group bg-white rounded-2xl overflow-hidden shadow-soft border border-gray-100 transition-all duration-300 flex flex-col h-full relative ${isAdmin && !isActive ? 'grayscale opacity-70 hover:opacity-100 hover:grayscale-0' : 'hover:shadow-2xl hover:-translate-y-1'}`}
+    <div 
+      onClick={onClick}
+      className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden cursor-pointer group hover:shadow-lg hover:-translate-y-1 transition duration-300 flex flex-col h-full"
     >
-      {/* --- ADMIN BADGE JIKA NON-AKTIF --- */}
-      {isAdmin && !isActive && (
-        <div className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold py-1 text-center z-20 flex items-center justify-center gap-1">
-            <FaEyeSlash /> NON-AKTIF (Disembunyikan)
-        </div>
-      )}
-
-      {/* IMAGE WRAPPER (Sama seperti sebelumnya) */}
-      <div className="relative h-48 overflow-hidden cursor-pointer" onClick={onClick}>
-         {/* ... code gambar sama ... */}
-         <img src={product.image_url} alt={product.product_name} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
-         {/* ... badge kategori sama ... */}
+      {/* GAMBAR: HP h-36 (lebih pendek biar ringkas), Laptop h-48 */}
+      <div className="h-36 md:h-48 bg-gray-100 relative overflow-hidden flex-shrink-0">
+        <img 
+          src={product.image_url} 
+          alt={product.product_name} 
+          className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+        />
+        {product.category?.name && (
+          <div className="absolute top-2 left-2 bg-white/90 px-2 py-0.5 rounded text-[10px] font-bold text-gray-700 shadow-sm backdrop-blur-sm">
+            {product.category.name}
+          </div>
+        )}
       </div>
 
-      {/* INFO WRAPPER (Sama seperti sebelumnya) */}
-      <div className="p-5 flex-1 flex flex-col">
-         {/* ... content nama, deskripsi, harga sama ... */}
-         <h3 className="font-bold text-lg text-gray-800 line-clamp-1 group-hover:text-desa-primary transition-colors">{product.product_name}</h3>
-         {/* ... dst ... */}
-      </div>
-
-      {/* === ACTION BUTTONS FOR ADMIN (Sama tapi dengan tooltip) === */}
-      {isAdmin && (
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3 backdrop-blur-[2px] z-30">
-             {/* Tombol Edit */}
-            <button onClick={(e) => { e.stopPropagation(); onEdit(product); }} className="bg-amber-500 text-white p-3 rounded-full hover:bg-amber-600 shadow-lg transform hover:scale-110 transition" title="Edit Produk & Status">
-                <FaEdit size={18} />
-            </button>
-             {/* Tombol Hapus */}
-            <button onClick={(e) => { e.stopPropagation(); onDelete(product.id); }} className="bg-desa-danger text-white p-3 rounded-full hover:bg-red-700 shadow-lg transform hover:scale-110 transition" title="Hapus Permanen">
-                <FaTrash size={18} />
-            </button>
+      {/* KONTEN */}
+      <div className="p-3 flex flex-col flex-1">
+        
+        {/* Judul & Harga */}
+        <div className="mb-2">
+            <h3 className="font-bold text-gray-900 text-xs md:text-sm line-clamp-2 leading-snug group-hover:text-green-600 transition">
+                {product.product_name}
+            </h3>
+            <div className="font-bold text-green-600 text-xs md:text-sm mt-1">
+                {formatRupiah(product.price)}
+            </div>
         </div>
-      )}
+
+        {/* Toko */}
+        <p className="text-[10px] text-gray-500 flex items-center gap-1 mb-3 mt-auto">
+            <FaStore className="text-gray-300"/> 
+            <span className="line-clamp-1">{product.business_name}</span>
+        </p>
+
+        {/* TOMBOL AKSI (RESPONSIF) */}
+        {isAdmin && (
+            <div className="flex gap-2 pt-2 border-t border-gray-100 mt-auto">
+                {/* Tombol menggunakan flex-1 agar berbagi ruang rata */}
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onEdit(product); }}
+                    className="flex-1 bg-yellow-50 text-yellow-600 py-1.5 rounded-md text-[10px] md:text-xs font-bold hover:bg-yellow-100 border border-yellow-200 flex items-center justify-center gap-1"
+                >
+                    <FaEdit /> <span className="">Edit</span>
+                </button>
+                <button 
+                    onClick={(e) => { e.stopPropagation(); onDelete(product.id); }}
+                    className="flex-1 bg-red-50 text-red-600 py-1.5 rounded-md text-[10px] md:text-xs font-bold hover:bg-red-100 border border-red-200 flex items-center justify-center gap-1"
+                >
+                    <FaTrash /> <span className="">Hapus</span>
+                </button>
+            </div>
+        )}
+      </div>
     </div>
   );
 }
