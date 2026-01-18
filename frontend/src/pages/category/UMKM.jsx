@@ -36,9 +36,12 @@ export default function Umkm() {
               <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-2">
                   Produk <span className="text-orange-600">UMKM</span>
               </h1>
-              <p className="text-xs md:text-base text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                  Karya kreatif dan inovatif dari tangan terampil warga Tiyuh.
-              </p>
+              <p className="text-xs md:text-base text-gray-500 leading-relaxed max-w-3xl mx-auto">
+                Eksplorasi ragam karya kreatif dan inovatif dari tangan-tangan terampil warga Tiyuh. 
+                Kategori ini menampilkan produk industri rumah tangga, kuliner khas, kerajinan tangan, dan jasa 
+                yang dikembangkan oleh pelaku Usaha Mikro, Kecil, dan Menengah (UMKM) setempat. 
+                Membeli produk mereka berarti ikut menggerakkan roda perekonomian tetangga kita.
+                </p>
           </div>
       </div>
 

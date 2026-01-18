@@ -15,6 +15,7 @@ export default function Bumdes() {
   const [previewProduct, setPreviewProduct] = useState(null);
 
   useEffect(() => {
+    // API Call (Query Tetap BUMDes jika di database kategorinya masih bernama "BUMDes")
     api.get("/products?category=BUMDes")
       .then((res) => setProducts(res.data.data || []))
       .catch((err) => console.error(err))
@@ -29,17 +30,20 @@ export default function Bumdes() {
       
       <HeroSlider isAdmin={false} isHomePage={false} hideText={true} />
 
-      {/* KARTU FLOATING - Padding Mobile disesuaikan (p-6) */}
+      {/* KARTU FLOATING - BUMTI */}
       <div className="max-w-5xl mx-auto px-4 -mt-12 md:-mt-16 relative z-40">
           <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-t-4 border-green-500 text-center animate-fade-in-up">
               <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 bg-green-100 text-green-600 rounded-full mb-3 md:mb-4">
                   <FaStore className="text-2xl md:text-3xl" />
               </div>
               <h1 className="text-2xl md:text-4xl font-extrabold text-gray-900 mb-2">
-                  Produk <span className="text-green-600">BUMDes</span>
+                  Produk <span className="text-green-600">BUMTI</span>
               </h1>
-              <p className="text-xs md:text-base text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                  Dukung kemandirian ekonomi desa dengan membeli produk-produk asli Badan Usaha Milik Desa.
+              {/* DESKRIPSI PANJANG BUMTI */}
+              <p className="text-xs md:text-base text-gray-500 leading-relaxed max-w-3xl mx-auto">
+                  <b>Badan Usaha Milik Tiyuh (BUMTI)</b> adalah pilar ekonomi desa yang dikelola secara profesional untuk meningkatkan Pendapatan Asli Tiyuh. 
+                  Temukan berbagai produk unggulan dan unit usaha yang dikelola langsung oleh desa, mulai dari hasil pertanian, peternakan, hingga jasa, 
+                  yang hasilnya akan kembali untuk pembangunan masyarakat Tiyuh Kagungan Ratu Agung.
               </p>
           </div>
       </div>
@@ -48,7 +52,7 @@ export default function Bumdes() {
          <div className="flex justify-center mb-8 md:mb-10">
              <div className="relative w-full max-w-md">
                 <input 
-                    type="text" placeholder="Cari produk BUMDes..." 
+                    type="text" placeholder="Cari produk BUMTI..." 
                     className="w-full pl-10 md:pl-12 pr-4 py-2.5 md:py-3 rounded-full border border-gray-200 shadow-sm focus:ring-2 focus:ring-green-500 outline-none transition text-sm md:text-base"
                     value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -56,7 +60,6 @@ export default function Bumdes() {
              </div>
          </div>
 
-         {/* GRID 2 KOLOM DI MOBILE */}
          {loading ? (
              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
                  {[...Array(4)].map((_, i) => <SkeletonCard key={i} />)}
@@ -72,7 +75,7 @@ export default function Bumdes() {
          ) : (
              <div className="text-center py-20 bg-white rounded-xl border border-dashed border-gray-200">
                  <FaBoxOpen className="mx-auto text-4xl text-gray-300 mb-3" />
-                 <p className="text-gray-500">Belum ada produk.</p>
+                 <p className="text-gray-500">Belum ada produk BUMTI.</p>
              </div>
          )}
       </div>

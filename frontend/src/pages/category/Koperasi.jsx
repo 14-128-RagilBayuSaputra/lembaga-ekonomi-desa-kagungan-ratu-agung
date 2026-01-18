@@ -37,7 +37,9 @@ export default function Koperasi() {
                   Produk <span className="text-blue-600">Koperasi</span>
               </h1>
               <p className="text-xs md:text-base text-gray-500 leading-relaxed max-w-2xl mx-auto">
-                  Solusi kebutuhan sehari-hari dengan harga terjangkau dan pelayanan terbaik.
+                Koperasi Tiyuh hadir sebagai soko guru perekonomian yang mengutamakan kesejahteraan anggota dan masyarakat. 
+                Di sini Anda dapat menemukan berbagai produk kebutuhan sehari-hari dengan harga terjangkau dan kualitas terjamin. 
+                Melalui semangat gotong royong, Koperasi berperan aktif dalam menyediakan layanan dan barang yang bermanfaat bagi seluruh warga.
               </p>
           </div>
       </div>

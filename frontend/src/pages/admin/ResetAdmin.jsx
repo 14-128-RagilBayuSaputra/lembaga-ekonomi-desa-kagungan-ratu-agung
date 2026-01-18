@@ -3,15 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { FaArrowLeft, FaCheckCircle } from "react-icons/fa";
 import api from "../../api/axios";
 
-// IMPORT GAMBAR
+// IMPORT GAMBAR BACKGROUND
 import bgLogin from "../../assets/bg-login.jpg";
-import logoTiyuh from "../../assets/logo.jpeg"; 
+
+// PERBAIKAN 1: Hapus import logo yang bikin error
+// import logoTiyuh from "../../assets/logo.jpeg"; 
 
 const StandardInput = ({ label, ...props }) => (
     <div>
         <label className="block text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-wide mb-1 ml-1">{label}</label>
         <input 
-            // py-2.5 dan text-sm untuk tampilan lebih compact
             className="w-full px-4 py-2.5 md:py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 outline-none transition-all placeholder-gray-400 text-gray-800 text-sm md:text-base"
             {...props} 
         />
@@ -37,7 +38,8 @@ export default function ResetAdmin() {
     try {
       await api.post("/auth/reset", form);
       setSuccess(true);
-      setTimeout(() => navigate("/admin/login"), 2000);
+      // PERBAIKAN 2: Arahkan ke /login (sesuai AppRoutes)
+      setTimeout(() => navigate("/login"), 2000);
     } catch {
       setError("Kode reset salah atau data tidak valid");
       setLoading(false);
@@ -47,7 +49,7 @@ export default function ResetAdmin() {
   return (
     <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gray-900 px-4">
       
-      {/* BACKGROUND (TIDAK DIUBAH) */}
+      {/* BACKGROUND */}
       <div 
         className="absolute inset-0 bg-cover bg-center blur-md scale-110 opacity-60"
         style={{ backgroundImage: `url(${bgLogin})` }}
@@ -55,14 +57,15 @@ export default function ResetAdmin() {
       <img src={bgLogin} alt="Background" className="absolute inset-0 w-full h-full object-contain z-0" />
       <div className="absolute inset-0 bg-black/40 z-0" />
 
-      {/* CARD RESET (DIPERKECIL) */}
+      {/* CARD RESET */}
       <div className="relative z-10 w-full max-w-sm md:max-w-md">
         <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl p-6 md:p-8 border border-white/20 animate-fade-in-up">
             
             {/* HEADER */}
             <div className="text-center mb-5">
+                {/* PERBAIKAN 3: Panggil logo langsung sebagai string */}
                 <img 
-                    src={logoTiyuh} 
+                    src="/logo.jpeg" 
                     alt="Logo Tiyuh" 
                     className="w-14 h-14 md:w-16 md:h-16 object-contain mx-auto mb-3"
                 />
@@ -126,8 +129,9 @@ export default function ResetAdmin() {
             )}
 
             <div className="text-center mt-5 pt-3 border-t border-gray-200">
+                {/* PERBAIKAN 4: Navigasi kembali ke /login */}
                 <button
-                    onClick={() => navigate("/admin/login")}
+                    onClick={() => navigate("/login")}
                     className="flex items-center justify-center gap-2 text-xs md:text-sm text-gray-500 hover:text-gray-800 transition font-medium"
                 >
                     <FaArrowLeft size={10} /> Batal, kembali ke login
