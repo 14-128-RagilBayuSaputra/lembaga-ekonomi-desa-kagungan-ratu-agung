@@ -4,7 +4,7 @@ Platform digital berbasis web untuk mempromosikan dan mengelola potensi ekonomi 
 
 Project ini terdiri dari **Halaman Publik** untuk masyarakat dan **Panel Admin** untuk pengelola data.
 
-![Preview Website](frontend/public/logo.jpeg) 
+![Preview Website](frontend/public/tampilan.png) 
 *(Ganti baris ini dengan screenshot website Anda jika ada)*
 
 ---
