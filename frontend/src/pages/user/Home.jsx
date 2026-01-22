@@ -7,6 +7,7 @@ import Navbar from "../../components/common/Navbar";
 import HeroSlider from "../../components/common/HeroSlider";
 import ProductCard from "../../components/ui/ProductCard";
 import ProductDetailModal from "../../components/ui/ProductDetailModal";
+import Footer from "../../components/common/Footer";
 
 export default function Home() {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export default function Home() {
 
   const categories = [
     {
-      title: "BUMTI", // Ganti BUMTI
+      title: "BUMTI",
       desc: "Produk unggulan Badan Usaha Milik Tiyuh.",
       path: "/bumdes",
       icon: <FaStore className="text-2xl md:text-4xl text-green-600 mb-2 md:mb-3" />,
@@ -61,11 +62,9 @@ export default function Home() {
 
       <HeroSlider isAdmin={false} isHomePage={true} hideText={true} />
 
-      {/* KARTU SAMBUTAN (DESKRIPSI PANJANG & LOGO DESA) */}
       <div className="max-w-5xl mx-auto px-4 -mt-12 md:-mt-16 relative z-40">
           <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 border-t-4 border-green-500 text-center animate-fade-in-up">
               
-              {/* GANTI LOGO DAUN DENGAN LOGO DESA */}
               <div className="inline-flex items-center justify-center w-16 h-16 bg-white rounded-full mb-3 shadow-sm border border-gray-100 overflow-hidden">
                   <img src="/logo.jpeg" alt="Logo Tiyuh" className="w-full h-full object-cover" />
               </div>
@@ -76,7 +75,6 @@ export default function Home() {
               </h1>
               <div className="w-20 h-1 bg-green-200 mx-auto mb-4 rounded-full"></div>
               
-              {/* DESKRIPSI DIPERPANJANG */}
               <p className="text-xs md:text-base text-gray-500 leading-relaxed max-w-3xl mx-auto text-justify md:text-center">
                   Selamat datang di platform digital resmi <b>Lembaga Ekonomi Tiyuh Kagungan Ratu Agung</b>. 
                   Website ini hadir sebagai jembatan untuk memperkenalkan dan mempromosikan potensi ekonomi lokal yang luar biasa. 
@@ -87,7 +85,6 @@ export default function Home() {
           </div>
       </div>
 
-      {/* KATEGORI */}
       <div className="max-w-7xl mx-auto px-4 py-10 md:py-16">
         <div className="text-center mb-6 md:mb-12">
             <h2 className="text-2xl md:text-3xl font-extrabold text-gray-900">Kategori Usaha</h2>
@@ -112,7 +109,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PANDUAN MITRA */}
       <div className="bg-green-50 py-10 md:py-16 border-t border-b border-green-100">
         <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-8 md:mb-12">
@@ -142,7 +138,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* PRODUK TERBARU */}
       <div className="bg-white py-10 md:py-16">
           <div className="max-w-7xl mx-auto px-4">
               <div className="flex justify-between items-end mb-6">
@@ -170,6 +165,8 @@ export default function Home() {
       </div>
 
       <ProductDetailModal product={previewProduct} onClose={() => setPreviewProduct(null)} />
+
+      <Footer />
     </div>
   );
 }
